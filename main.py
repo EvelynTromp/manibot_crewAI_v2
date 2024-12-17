@@ -19,26 +19,32 @@ async def main():
     
     try:
         if args.scan:
-            logger.info("Scanning markets for opportunities...")
+            print("\n🔍 Scanning markets for opportunities...\n")  # More user-friendly
             results = await crew.scan_markets()
-            logger.info(f"Scan complete. Results: {results}")
+            
+            # Format results in a cleaner way
+            successful = len([r for r in results if r.get('success')])
+            total = len(results)
+            print(f"\n✅ Scan complete: Analyzed {total} markets ({successful} successful)\n")
             
         elif args.market:
-            logger.info(f"Analyzing specific market: {args.market}")
+            print(f"\n📊 Analyzing market: {args.market}\n")
             result = await crew.analyze_and_trade(args.market)
-            logger.info(f"Analysis complete. Result: {result}")
+            print("\n✅ Analysis complete\n")
             
         elif args.monitor:
-            logger.info("Monitoring active positions...")
+            print("\n👀 Monitoring active positions...\n")
             positions = await crew.monitor_positions()
-            logger.info(f"Current positions: {positions}")
+            print(f"\nCurrent positions: {positions}\n")
             
         else:
-            logger.error("No action specified. Use --scan, --market, or --monitor")
+            print("\n❌ Error: No action specified. Use --scan, --market, or --monitor\n")
             
     except Exception as e:
-        logger.error(f"Error in main execution: {str(e)}")
+        print(f"\n❌ Error: {str(e)}\n")
         raise
+
+
 
 if __name__ == "__main__":
     asyncio.run(main())
