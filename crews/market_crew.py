@@ -90,7 +90,7 @@ class MarketCrew(BaseCrew):
             await self.handle_error(e, {"market_id": market_id})
             return {"success": False, "error": str(e)}
     
-    async def scan_markets(self, limit: int = 10) -> List[Dict]:
+    async def scan_markets(self, limit: int = 3) -> List[Dict]:
         """
         Scan for trading opportunities across multiple markets.
         
