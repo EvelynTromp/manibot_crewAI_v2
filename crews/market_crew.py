@@ -28,21 +28,76 @@ class MarketCrew(BaseCrew):
             verbose=True
         )
     
+    # async def analyze_and_trade(self, market_id: str) -> Dict:
+    #     """
+    #     Coordinate the full analysis and trading process for a market.
+        
+    #     Args:
+    #         market_id: ID of the market to analyze
+            
+    #     Returns:
+    #         Dictionary containing process results
+    #     """
+    #     try:
+    #         # Set up tasks for this market
+    #         self._setup_market_tasks(market_id)
+            
+    #         # Get agents by role
+    #         researcher = next((a for a in self.agents if a.role == 'Market Researcher'), None)
+    #         decision_maker = next((a for a in self.agents if a.role == 'Market Decision Maker'), None)
+    #         executor = next((a for a in self.agents if a.role == 'Market Executor'), None)
+            
+    #         if not all([researcher, decision_maker, executor]):
+    #             raise ValueError("Could not find all required agents")
+            
+    #         # Execute research
+    #         research_data = await researcher.research_market(market_id)
+            
+    #         # Make decision
+    #         analysis = await decision_maker.analyze_opportunity(research_data)
+            
+    #         # Execute trade if recommended
+    #         result = {"market_id": market_id, "success": True}
+    #         if analysis.get('bet_recommendation'):
+    #             if await decision_maker.validate_decision(
+    #                 research_data['market_data'],
+    #                 analysis,
+    #                 analysis['bet_recommendation']
+    #             ):
+    #                 execution_result = await executor.execute_trade(
+    #                     market_id,
+    #                     analysis,
+    #                     research_data
+    #                 )
+    #                 result.update(execution_result)
+    #             else:
+    #                 result.update({"success": False, "reason": "Failed validation"})
+    #         else:
+    #             result.update({"success": False, "reason": "No trading opportunity"})
+            
+    #         # Log execution
+    #         self.log_execution({
+    #             "market_id": market_id,
+    #             "research_data": research_data,
+    #             "analysis": analysis,
+    #             "result": result
+    #         })
+            
+    #         return result
+            
+    #     except Exception as e:
+    #         logger.error(f"Error in market crew execution: {str(e)}")
+    #         await self.handle_error(e, {"market_id": market_id})
+    #         return {"success": False, "error": str(e)}
+
+
+    # In market_crew.py, modify analyze_and_trade
     async def analyze_and_trade(self, market_id: str) -> Dict:
         """
-        Coordinate the full analysis and trading process for a market.
-        
-        Args:
-            market_id: ID of the market to analyze
-            
-        Returns:
-            Dictionary containing process results
+        Modified for testing: Will always attempt to execute a trade
         """
         try:
-            # Set up tasks for this market
-            self._setup_market_tasks(market_id)
-            
-            # Get agents by role
+            # Get our agents
             researcher = next((a for a in self.agents if a.role == 'Market Researcher'), None)
             decision_maker = next((a for a in self.agents if a.role == 'Market Decision Maker'), None)
             executor = next((a for a in self.agents if a.role == 'Market Executor'), None)
@@ -50,30 +105,24 @@ class MarketCrew(BaseCrew):
             if not all([researcher, decision_maker, executor]):
                 raise ValueError("Could not find all required agents")
             
-            # Execute research
+            # Get research data (we'll always get something)
             research_data = await researcher.research_market(market_id)
             
-            # Make decision
+            # Get analysis (we modified this to always recommend a trade)
             analysis = await decision_maker.analyze_opportunity(research_data)
             
-            # Execute trade if recommended
-            result = {"market_id": market_id, "success": True}
-            if analysis.get('bet_recommendation'):
-                if await decision_maker.validate_decision(
-                    research_data['market_data'],
-                    analysis,
-                    analysis['bet_recommendation']
-                ):
-                    execution_result = await executor.execute_trade(
-                        market_id,
-                        analysis,
-                        research_data
-                    )
-                    result.update(execution_result)
-                else:
-                    result.update({"success": False, "reason": "Failed validation"})
-            else:
-                result.update({"success": False, "reason": "No trading opportunity"})
+            # Execute trade (removing all validation checks for testing)
+            execution_result = await executor.execute_trade(
+                market_id,
+                analysis,
+                research_data
+            )
+            
+            result = {
+                "market_id": market_id,
+                "success": True
+            }
+            result.update(execution_result)
             
             # Log execution
             self.log_execution({
@@ -84,12 +133,16 @@ class MarketCrew(BaseCrew):
             })
             
             return result
-            
+                
         except Exception as e:
             logger.error(f"Error in market crew execution: {str(e)}")
             await self.handle_error(e, {"market_id": market_id})
             return {"success": False, "error": str(e)}
     
+
+
+
+
     async def scan_markets(self, limit: int = 3) -> List[Dict]:
         """
         Scan for trading opportunities across multiple markets.

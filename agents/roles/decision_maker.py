@@ -29,9 +29,37 @@ class DecisionMakerAgent(Agent):
             self._gpt_client = GPTClient()
         return self._gpt_client
 
+    # async def analyze_opportunity(self, research_data: Dict) -> Dict:
+    #     """
+    #     Analyze market research and determine if there's a trading opportunity.
+        
+    #     Args:
+    #         research_data: Dictionary containing market and research information
+            
+    #     Returns:
+    #         Dictionary containing analysis and trading recommendation
+    #     """
+    #     # Analyze market using GPT
+    #     analysis = await self.gpt_client.analyze_market(
+    #         research_data['market_data'],
+    #         research_data['summary']
+    #     )
+        
+    #     # Determine optimal bet size if opportunity exists
+    #     if analysis['estimated_probability'] is not None:
+    #         bet_recommendation = self._calculate_bet_size(
+    #             analysis['estimated_probability'],
+    #             analysis['confidence_level'],
+    #             research_data['market_data']
+    #         )
+    #         analysis['bet_recommendation'] = bet_recommendation
+        
+    #     return analysis
+
+    # In decision_maker.py, modify the analyze_opportunity method
     async def analyze_opportunity(self, research_data: Dict) -> Dict:
         """
-        Analyze market research and determine if there's a trading opportunity.
+        Modified for testing: Always recommends a small trade
         
         Args:
             research_data: Dictionary containing market and research information
@@ -39,22 +67,27 @@ class DecisionMakerAgent(Agent):
         Returns:
             Dictionary containing analysis and trading recommendation
         """
-        # Analyze market using GPT
-        analysis = await self.gpt_client.analyze_market(
-            research_data['market_data'],
-            research_data['summary']
-        )
+        # Get the current market probability
+        market_prob = float(research_data['market_data'].get('probability', 0.5))
         
-        # Determine optimal bet size if opportunity exists
-        if analysis['estimated_probability'] is not None:
-            bet_recommendation = self._calculate_bet_size(
-                analysis['estimated_probability'],
-                analysis['confidence_level'],
-                research_data['market_data']
-            )
-            analysis['bet_recommendation'] = bet_recommendation
+        # For testing: Always generate a recommendation
+        analysis = {
+            'estimated_probability': market_prob + 0.05,  # Slightly higher than market
+            'confidence_level': 0.8,  # High confidence for testing
+            'key_factors': ['Test factor 1', 'Test factor 2'],
+            'bet_recommendation': {
+                'amount': 5.0,  # Small fixed bet size for testing
+                'probability': market_prob + 0.05,
+                'edge': 0.05,
+                'confidence': 0.8,
+                'market_quality_score': 1.0
+            }
+        }
         
         return analysis
+
+
+
 
     def _calculate_bet_size(self, 
                           estimated_prob: float, 
@@ -135,31 +168,41 @@ class DecisionMakerAgent(Agent):
             
         return min(base_score, 1.0)
 
-    async def validate_decision(self, 
-                              market_data: Dict, 
-                              analysis: Dict, 
-                              bet_details: Dict) -> bool:
-        """
-        Validate the trading decision before execution.
+    # async def validate_decision(self, 
+    #                           market_data: Dict, 
+    #                           analysis: Dict, 
+    #                           bet_details: Dict) -> bool:
+    #     """
+    #     Validate the trading decision before execution.
         
-        Args:
-            market_data: Market information
-            analysis: Market analysis
-            bet_details: Proposed bet details
+    #     Args:
+    #         market_data: Market information
+    #         analysis: Market analysis
+    #         bet_details: Proposed bet details
             
-        Returns:
-            Boolean indicating whether to proceed with the bet
-        """
-        # Basic validation checks
-        if not self._validate_bet_constraints(bet_details):
-            return False
+    #     Returns:
+    #         Boolean indicating whether to proceed with the bet
+    #     """
+    #     # Basic validation checks
+    #     if not self._validate_bet_constraints(bet_details):
+    #         return False
         
-        # Use GPT for additional validation
-        return await self.gpt_client.validate_decision(
-            market_data,
-            analysis,
-            bet_details
-        )
+    #     # Use GPT for additional validation
+    #     return await self.gpt_client.validate_decision(
+    #         market_data,
+    #         analysis,
+    #         bet_details
+    #     )
+
+    # Also in decision_maker.py, modify the validate_decision method
+    async def validate_decision(self, 
+                            market_data: Dict, 
+                            analysis: Dict, 
+                            bet_details: Dict) -> bool:
+        """
+        Modified for testing: Always validates the trade
+        """
+        return True
 
     def _validate_bet_constraints(self, bet_details: Dict) -> bool:
         """Validate that bet meets basic constraints."""

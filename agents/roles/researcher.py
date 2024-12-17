@@ -53,12 +53,6 @@ class ResearcherAgent(Agent):
     async def research_market(self, market_id: str) -> Dict:
         """
         Conduct comprehensive research on a specific market.
-        
-        Args:
-            market_id: ID of the Manifold market to research
-            
-        Returns:
-            Dictionary containing market data and research findings
         """
         try:
             # Get market details
@@ -77,8 +71,12 @@ class ResearcherAgent(Agent):
                     'results': results
                 })
             
-            # Get market analytics
-            positions = await self.manifold_client.get_market_positions(market_id)
+            # Get market positions - make this optional
+            try:
+                positions = await self.manifold_client.get_market_positions(market_id)
+            except Exception as e:
+                print(f"Warning: Could not fetch positions for market {market_id}: {str(e)}")
+                positions = {"positions": []}
             
             return {
                 'market_data': market_data,
@@ -87,7 +85,7 @@ class ResearcherAgent(Agent):
                 'summary': await self._generate_research_summary(market_data, research_findings, positions)
             }
         except Exception as e:
-            logger.error(f"Error researching market {market_id}: {str(e)}")
+            print(f"Error researching market {market_id}: {str(e)}")
             raise
 
     def _generate_search_queries(self, question: str) -> List[str]:
@@ -171,36 +169,49 @@ class ResearcherAgent(Agent):
             logger.error(f"Error getting active markets: {str(e)}")
             raise
 
+    # def _is_market_interesting(self, market: Dict) -> bool:
+    #     """
+    #     Determine if a market is interesting for research using enhanced filtering criteria.
+    #     Returns True if the market meets our trading criteria.
+    #     """
+    #     # Basic market status checks
+    #     if market.get('isResolved', False) or market.get('isClosed', False):
+    #         logger.info("Market rejected: Already resolved or closed")
+    #         return False
+
+    #     # Get key metrics
+    #     total_liquidity = float(market.get('totalLiquidity', 0))
+    #     volume = float(market.get('volume', 0))
+        
+    #     # Criteria thresholds
+    #     min_liquidity = 10  # Reduced from 20
+    #     min_volume = 3     # Reduced from 5
+        
+    #     # Check criteria
+    #     liquidity_ok = total_liquidity >= min_liquidity
+    #     volume_ok = volume >= min_volume
+        
+    #     meets_criteria = all([liquidity_ok, volume_ok])
+        
+    #     if meets_criteria:
+    #         logger.info("Market accepted: Meets all criteria")
+    #     else:
+    #         logger.info("Market rejected: Failed to meet all criteria")
+            
+    #     return meets_criteria
+
+
+
+    # In researcher.py, modify the _is_market_interesting method
     def _is_market_interesting(self, market: Dict) -> bool:
         """
-        Determine if a market is interesting for research using enhanced filtering criteria.
-        Returns True if the market meets our trading criteria.
+        Simplified market filtering for testing - accepts almost any open market
         """
-        # Basic market status checks
+        # Only check if market is still open
         if market.get('isResolved', False) or market.get('isClosed', False):
-            logger.info("Market rejected: Already resolved or closed")
             return False
-
-        # Get key metrics
-        total_liquidity = float(market.get('totalLiquidity', 0))
-        volume = float(market.get('volume', 0))
-        
-        # Criteria thresholds
-        min_liquidity = 10  # Reduced from 20
-        min_volume = 3     # Reduced from 5
-        
-        # Check criteria
-        liquidity_ok = total_liquidity >= min_liquidity
-        volume_ok = volume >= min_volume
-        
-        meets_criteria = all([liquidity_ok, volume_ok])
-        
-        if meets_criteria:
-            logger.info("Market accepted: Meets all criteria")
-        else:
-            logger.info("Market rejected: Failed to meet all criteria")
             
-        return meets_criteria
+        return True
 
     def _calculate_market_metrics(self, market: Dict) -> Dict:
         """

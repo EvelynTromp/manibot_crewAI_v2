@@ -39,56 +39,61 @@ class ExecutorAgent(Agent):
             self._active_bets = []
         return self._active_bets
 
-    async def execute_trade(self, 
-                          market_id: str, 
-                          decision: Dict,
-                          analysis: Dict) -> Dict:
-        """
-        Execute a trade based on the decision maker's analysis.
-        
-        Args:
-            market_id: ID of the market to trade
-            decision: Dictionary containing trade decision details
-            analysis: Dictionary containing market analysis
-            
-        Returns:
-            Dictionary containing trade execution results
-        """
-        logger.info(f"Executing trade for market {market_id}")
-        
+
+
+    async def execute_trade(self, market_id: str, decision: Dict, research_data: Dict) -> Dict:
         try:
-            # Double-check market status
-            market = await self.manifold_client.get_market(market_id)
-            if not self._is_market_tradeable(market):
-                logger.warning(f"Market {market_id} is not tradeable")
-                return {"success": False, "error": "Market not tradeable"}
+            market = research_data['market_data']
+            amount = decision['bet_recommendation']['amount']
+            probability = decision['bet_recommendation']['probability']
             
-            # Execute the bet
+            # Add validation
+            if market['outcomeType'] != 'BINARY':
+                return {"success": False, "error": "Only binary markets supported currently"}
+                
+            if market['isResolved'] or market.get('isClosed'):
+                return {"success": False, "error": "Market is closed or resolved"}
+            
+            outcome = "YES" if probability > 0.5 else "NO"
+            print(f"Attempting binary bet: {amount}M @ {probability} on {outcome}")
+            
             bet_result = await self.manifold_client.place_bet(
                 market_id=market_id,
-                amount=decision['bet_recommendation']['amount'],
-                probability=decision['bet_recommendation']['probability'],
-                outcome="YES" if decision['bet_recommendation']['probability'] > 0.5 else "NO"
+                amount=amount,
+                probability=probability,
+                outcome=outcome
             )
             
             # Record the trade
             trade_record = self._record_trade(market_id, decision, bet_result)
             self._active_bets.append(trade_record)
             
-            logger.info(f"Successfully executed trade for market {market_id}")
             return {"success": True, "trade": trade_record}
-            
+                
         except Exception as e:
-            logger.error(f"Error executing trade: {str(e)}")
-            return {"success": False, "error": str(e)}
+            if "400" in str(e):
+                print(f"Bad request error details: {str(e)}")
+            raise
 
+
+        
     def _is_market_tradeable(self, market: Dict) -> bool:
         """Check if market is currently tradeable."""
-        return (
-            not market.get('isResolved', False) and
-            not market.get('isClosed', False) and
-            market.get('isActive', False)
-        )
+        # Basic checks
+        if market.get('isResolved', False) or market.get('isClosed', False):
+            return False
+            
+        # For binary markets
+        if market.get('outcomeType') == 'BINARY':
+            return True
+            
+        # For multiple choice markets
+        if market.get('outcomeType') == 'MULTIPLE_CHOICE':
+            answers = market.get('answers', [])
+            return len(answers) > 0
+            
+        return True  # Default to allowing trades if we don't recognize the market type
+
 
     def _record_trade(self, market_id: str, decision: Dict, bet_result: Dict) -> Dict:
         """Record trade details for tracking."""
