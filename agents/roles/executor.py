@@ -76,7 +76,6 @@ class ExecutorAgent(Agent):
             raise
 
 
-        
     def _is_market_tradeable(self, market: Dict) -> bool:
         """Check if market is currently tradeable."""
         # Basic checks

@@ -169,49 +169,40 @@ class ResearcherAgent(Agent):
             logger.error(f"Error getting active markets: {str(e)}")
             raise
 
-    # def _is_market_interesting(self, market: Dict) -> bool:
-    #     """
-    #     Determine if a market is interesting for research using enhanced filtering criteria.
-    #     Returns True if the market meets our trading criteria.
-    #     """
-    #     # Basic market status checks
-    #     if market.get('isResolved', False) or market.get('isClosed', False):
-    #         logger.info("Market rejected: Already resolved or closed")
-    #         return False
-
-    #     # Get key metrics
-    #     total_liquidity = float(market.get('totalLiquidity', 0))
-    #     volume = float(market.get('volume', 0))
-        
-    #     # Criteria thresholds
-    #     min_liquidity = 10  # Reduced from 20
-    #     min_volume = 3     # Reduced from 5
-        
-    #     # Check criteria
-    #     liquidity_ok = total_liquidity >= min_liquidity
-    #     volume_ok = volume >= min_volume
-        
-    #     meets_criteria = all([liquidity_ok, volume_ok])
-        
-    #     if meets_criteria:
-    #         logger.info("Market accepted: Meets all criteria")
-    #     else:
-    #         logger.info("Market rejected: Failed to meet all criteria")
-            
-    #     return meets_criteria
 
 
 
-    # In researcher.py, modify the _is_market_interesting method
     def _is_market_interesting(self, market: Dict) -> bool:
         """
-        Simplified market filtering for testing - accepts almost any open market
+        Determine if a market is interesting for research using enhanced filtering criteria.
+        Returns True if the market meets our trading criteria.
         """
-        # Only check if market is still open
+        # Basic market status checks
         if market.get('isResolved', False) or market.get('isClosed', False):
+            logger.info("Market rejected: Already resolved or closed")
             return False
+
+        # Get key metrics
+        total_liquidity = float(market.get('totalLiquidity', 0))
+        volume = float(market.get('volume', 0))
+        
+        # Criteria thresholds
+        min_liquidity = 10  # Reduced from 20
+        min_volume = 3     # Reduced from 5
+        
+        # Check criteria
+        liquidity_ok = total_liquidity >= min_liquidity
+        volume_ok = volume >= min_volume
+        
+        meets_criteria = all([liquidity_ok, volume_ok])
+        
+        if meets_criteria:
+            logger.info("Market accepted: Meets all criteria")
+        else:
+            logger.info("Market rejected: Failed to meet all criteria")
             
-        return True
+        return meets_criteria
+
 
     def _calculate_market_metrics(self, market: Dict) -> Dict:
         """
@@ -226,7 +217,7 @@ class ResearcherAgent(Agent):
         total_liquidity = float(market.get('totalLiquidity', 0))
         volume = float(market.get('volume', 0))
         num_traders = len(market.get('traders', []))
-        
+
         metrics = {
             'liquidity_per_trader': total_liquidity / max(num_traders, 1),
             'volume_per_trader': volume / max(num_traders, 1),
@@ -234,8 +225,9 @@ class ResearcherAgent(Agent):
             'market_age_hours': self._calculate_market_age(market.get('createdTime')),
             'activity_score': self._calculate_activity_score(volume, total_liquidity, num_traders)
         }
-        
+
         return metrics
+   
 
     def _calculate_market_age(self, created_time: Union[str, int]) -> float:
         """
