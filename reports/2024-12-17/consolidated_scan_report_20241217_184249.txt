@@ -1,0 +1,356 @@
+
+####################################################################################################
+CONSOLIDATED SCAN REPORT
+####################################################################################################
+Scan Start Time: 2024-12-17 18:42:49
+End Time: 2024-12-17 18:44:39
+Total Markets Analyzed: 3
+
+
+================================================================================
+MARKET ANALYSIS REPORT - 2024-12-17 18:43:25
+================================================================================
+
+MARKET OVERVIEW
+--------------
+Market ID: PE8nCq8CAA
+Question: Will a human be magnetically levitated before 2035?
+Created Time: 2024-12-17 16:52:31
+Close Time: 2035-01-02 02:59:00
+
+Market Status:
+* Trading Volume: 385
+* Total Liquidity: 1000
+* Current Probability: 35.15%
+* Market Type: BINARY (cpmm-1)
+* Unique Bettor Count: 4
+
+Market Description:
+It must be the human body itself that's being levitated, not something the
+human is standing on. It must be clearly "levitation" as understood in English;
+visibly floating, almost all of their weight supported by the magnet. So far I
+think the largest is a mouse.
+
+DETAILED RESEARCH ANALYSIS
+------------------------
+Research Queries and Results:
+
+Query 1: Will a human be magnetically levitated before 2035?
+--------------------------------------------------------------------------------
+No results found for: Will a human be magnetically levitated before 2035?
+
+Query 2: latest news Will a human be magnetically levitated before 2035?
+--------------------------------------------------------------------------------
+No results found for: latest news Will a human be magnetically levitated before 2035?
+
+Query 3: analysis Will a human be magnetically levitated before 2035?
+--------------------------------------------------------------------------------
+No results found for: analysis Will a human be magnetically levitated before 2035?
+
+Query 4: prediction Will a human be magnetically levitated before 2035?
+--------------------------------------------------------------------------------
+No results found for: prediction Will a human be magnetically levitated before 2035?
+
+Query 5: expert opinion Will a human be magnetically levitated before 2035?
+--------------------------------------------------------------------------------
+No results found for: expert opinion Will a human be magnetically levitated before 2035?
+
+
+
+GPT ANALYSIS PROCESS
+------------------
+
+Step-by-Step Analysis Process:
+----------------------------
+Given the information provided and the lack of direct research or expert opinion specifically addressing the question, my analysis must rely on a combination of inference from related scientific advancements, understanding of technological trends, and assessment of the market's structure and behavior. Here's a structured breakdown:
+
+### 1. Probability of Each Possible Outcome
+
+**Yes (Human being magnetically levitated before 2035)**: Given the advancement in magnetic levitation technologies and the fact that smaller organisms like mice have already been levitated, it's reasonable to assume progress could extend to humans within the next 12 years. However, scaling up from mice to humans involves significant scientific and technical challenges, including safety, precision control, and power requirements.
+
+Considering incremental technological advancements, the support from both public and private sectors in scientific research, and the growing interest in breakthrough technologies, I estimate **a probability of 40%** for this outcome.
+
+**No (Human not being magnetically levitated before 2035)**: The remaining **60% probability** is assigned to this outcome. This reflects the substantial hurdles that need to be overcome, including the need for breakthroughs in materials science, magnet technology, and human safety protocols.
+
+### 2. Trading Edges
+
+The current market probability for "Yes" is approximately 35.15%. Compared to my estimate of 40%, this represents a small but potentially exploitable edge of about 4.85%. This difference falls within the 3-5% guideline for significant edges, suggesting a trading opportunity may exist.
+
+### 3. Key Factors Influencing the Outcome
+
+- **Technological Advancements**: Progress in related fields like superconducting materials, magnetic fields, and life sciences could accelerate developments.
+- **Safety and Ethics**: The primary concern will be ensuring it's safe to magnetically levitate a human, which will involve rigorous testing and ethical considerations.
+- **Funding and Interest**: Increased investment and public interest in cutting-edge technology could drive faster progress.
+- **Scientific Breakthroughs**: Unforeseen discoveries in physics or materials science could either create new opportunities or present insurmountable challenges.
+
+### 4. Confidence Level in the Analysis
+
+Given the speculative nature of the question, limited direct research findings, and the reliance on inference and extrapolation, my confidence level in this analysis is **moderately high**. While the estimated probabilities and identified trading edge are based on logical reasoning and available market data, the actual outcome could be influenced by factors not currently foreseeable. Therefore, while there appears to be a trading opportunity based on the identified edge, caution and risk management are advised.
+
+**Actionable Opportunity**: Given the identified edge, entering a position that benefits from an increase in the probability of "Yes" could be advantageous. However, this position should be carefully sized to manage risk, considering the speculative nature of the market and the confidence level in the analysis.
+
+
+Key Analysis Metrics:
+------------------
+Estimated Probability: None
+Confidence Level: None
+
+Key Decision Factors:
+No key factors identified
+
+
+DECISION MAKING PROCESS
+---------------------
+
+Analysis Summary:
+---------------
+No betting opportunity identified
+
+
+EXECUTION OUTCOME
+---------------
+Result: NO TRADE
+Reason: No trading opportunity
+Details: Analysis did not recommend a trade
+
+================================================================================
+
+
+
+================================================================================
+MARKET ANALYSIS REPORT - 2024-12-17 18:44:01
+================================================================================
+
+MARKET OVERVIEW
+--------------
+Market ID: zNCtdZ9nUN
+Question: In 2025, will a Magic: The Gathering card be banned within 2 weeks of becoming legal in a format?
+Created Time: 2024-12-17 17:33:50
+Close Time: 2025-12-31 23:59:00
+
+Market Status:
+* Trading Volume: 25
+* Total Liquidity: 1000
+* Current Probability: 49.25%
+* Market Type: BINARY (cpmm-1)
+* Unique Bettor Count: 2
+
+Market Description:
+The ban must be announced within 14 days of the the card becoming legal in the
+format in paper OR the card becoming legal in the format online (i.e. ignoring
+any pre-release events). Pre-bans don't count, the card has to spend some time
+being playable in the format before it's banned. Alchemy-style nerfs are not
+bans. The card must be banned from one of these formats: Standard, Alchemy,
+Explorer/Pioneer, Historic, Timeless, Modern, Legacy, Vintage, Pauper,
+Commander, Brawl, Standard Brawl. Bans that hit a subset of one of these formats
+(such as a card only being banned in Best of 1 Arena Standard) still count.
+
+DETAILED RESEARCH ANALYSIS
+------------------------
+Research Queries and Results:
+
+Query 1: In 2025, will a Magic: The Gathering card be banned within 2 weeks of becoming legal in a format?
+--------------------------------------------------------------------------------
+No results found for: In 2025, will a Magic: The Gathering card be banned within 2 weeks of becoming legal in a format?
+
+Query 2: latest news In 2025, will a Magic: The Gathering card be banned within 2 weeks of becoming legal in a format?
+--------------------------------------------------------------------------------
+No results found for: latest news In 2025, will a Magic: The Gathering card be banned within 2 weeks of becoming legal in a format?
+
+Query 3: analysis In 2025, will a Magic: The Gathering card be banned within 2 weeks of becoming legal in a format?
+--------------------------------------------------------------------------------
+No results found for: analysis In 2025, will a Magic: The Gathering card be banned within 2 weeks of becoming legal in a format?
+
+Query 4: prediction In 2025, will a Magic: The Gathering card be banned within 2 weeks of becoming legal in a format?
+--------------------------------------------------------------------------------
+No results found for: prediction In 2025, will a Magic: The Gathering card be banned within 2 weeks of becoming legal in a format?
+
+Query 5: expert opinion In 2025, will a Magic: The Gathering card be banned within 2 weeks of becoming legal in a format?
+--------------------------------------------------------------------------------
+No results found for: expert opinion In 2025, will a Magic: The Gathering card be banned within 2 weeks of becoming legal in a format?
+
+
+
+GPT ANALYSIS PROCESS
+------------------
+
+Step-by-Step Analysis Process:
+----------------------------
+Given the market information and research data available, let's analyze the prediction market regarding whether a Magic: The Gathering (MTG) card will be banned within 2 weeks of becoming legal in a format in 2025. 
+
+### 1. Probability of Each Possible Outcome
+
+To estimate the probabilities of the outcomes, we need to consider the history of MTG card bans, the current trend in card designing and testing by Wizards of the Coast (the creators of MTG), and the diversity of formats mentioned (Standard, Alchemy, Explorer/Pioneer, Historic, Timeless, Modern, Legacy, Vintage, Pauper, Commander, Brawl, Standard Brawl).
+
+**Historical Context**: Historically, MTG has seen periods where card bans were more frequent, especially in response to competitive imbalances in formats like Standard. However, Wizards of the Coast has been improving its playtesting and design processes to minimize such occurrences.
+
+**Current Trends**: Given the broad range of formats, the likelihood of a card being banned in at least one format is not insignificant. However, the specific criterion of a ban occurring "within 2 weeks" of the card becoming legal adds a layer of rarity to the event. 
+
+**Estimate**: Considering these factors, a rough probability estimate for a ban happening within 2 weeks across all these formats could be slightly higher than the market suggests, around **55%**. This accounts for the unpredictable nature of card interactions in diverse formats and the historical precedent of rapid bans but also acknowledges improved design/testing processes.
+
+### 2. Trading Edges
+
+The market's current probability is approximately **49.25%**. Given my estimate of **55%**, there's a **5.75%** difference, which falls within the guideline of looking for 3-5% differences from market price. This suggests a trading edge in favor of betting "Yes."
+
+### 3. Key Factors Influencing the Outcome
+
+- **Card Design and Testing**: Improvements in these areas by Wizards of the Coast could reduce the frequency of bans.
+- **Competitive Play Trends**: The emergence of dominant strategies or combos can prompt rapid bans.
+- **Player Feedback and Community Sentiment**: Widespread community backlash can accelerate ban decisions.
+- **Game Balance Philosophy**: Shifts in how Wizards of the Coast balances competitive play vs. casual enjoyment can influence ban frequency.
+
+### 4. Confidence Level in the Analysis
+
+Given the speculative nature of this market and the limited specific data on future card bans, my confidence level is **moderate**. The historical and structural analysis provides a solid foundation, but unforeseen changes in game design, player behavior, or Wizards of the Coast's policies could impact the outcome significantly. The confidence in the 55% estimate is about **70%**, reflective of the inherent uncertainties in predicting specific future events in a complex ecosystem like MTG.
+
+### Conclusion
+
+With a **5.75%** trading edge identified, this represents a viable opportunity to take a position betting "Yes" on the possibility of a card being banned within 2 weeks of becoming legal in 2025, with a moderate confidence level in the analysis. However, traders should remain aware of the market's liquidity, the volume of trades, and any emerging news or trends that could influence the probability as 2025 approaches.
+
+
+Key Analysis Metrics:
+------------------
+Estimated Probability: None
+Confidence Level: None
+
+Key Decision Factors:
+No key factors identified
+
+
+DECISION MAKING PROCESS
+---------------------
+
+Analysis Summary:
+---------------
+No betting opportunity identified
+
+
+EXECUTION OUTCOME
+---------------
+Result: NO TRADE
+Reason: No trading opportunity
+Details: Analysis did not recommend a trade
+
+================================================================================
+
+
+
+================================================================================
+MARKET ANALYSIS REPORT - 2024-12-17 18:44:39
+================================================================================
+
+MARKET OVERVIEW
+--------------
+Market ID: 2gPuq2puCR
+Question: Will there be a break between Chainsaw Man chapters 188 and 189?
+Created Time: 2024-12-17 16:41:49
+Close Time: 2024-12-25 02:59:00
+
+Market Status:
+* Trading Volume: 5
+* Total Liquidity: 1000
+* Current Probability: 50.25%
+* Market Type: BINARY (cpmm-1)
+* Unique Bettor Count: 1
+
+Market Description:
+A break can be any amount of time, enough for Shonen Jump to state at the end
+of chapters if there will be a break before the next one. “YES” = “Yes, there
+will be a break after chapter 188” “NO” = “No, there will not be a break after
+chapter 188” Plan to close this on official release, will close earlier if
+known-accurate leakers post any details about a break ahead of time. I do not
+vote in my own questions.
+
+DETAILED RESEARCH ANALYSIS
+------------------------
+Research Queries and Results:
+
+Query 1: Will there be a break between Chainsaw Man chapters 188 and 189?
+--------------------------------------------------------------------------------
+No results found for: Will there be a break between Chainsaw Man chapters 188 and 189?
+
+Query 2: latest news Will there be a break between Chainsaw Man chapters 188 and 189?
+--------------------------------------------------------------------------------
+No results found for: latest news Will there be a break between Chainsaw Man chapters 188 and 189?
+
+Query 3: analysis Will there be a break between Chainsaw Man chapters 188 and 189?
+--------------------------------------------------------------------------------
+No results found for: analysis Will there be a break between Chainsaw Man chapters 188 and 189?
+
+Query 4: prediction Will there be a break between Chainsaw Man chapters 188 and 189?
+--------------------------------------------------------------------------------
+No results found for: prediction Will there be a break between Chainsaw Man chapters 188 and 189?
+
+Query 5: expert opinion Will there be a break between Chainsaw Man chapters 188 and 189?
+--------------------------------------------------------------------------------
+No results found for: expert opinion Will there be a break between Chainsaw Man chapters 188 and 189?
+
+
+
+GPT ANALYSIS PROCESS
+------------------
+
+Step-by-Step Analysis Process:
+----------------------------
+Given the market information and the research data available, we have a unique scenario to analyze for potential trading opportunities related to the prediction market on whether there will be a break between Chainsaw Man chapters 188 and 189.
+
+### 1. Probability of Each Possible Outcome
+
+Due to the lack of specific information from conventional sources (as indicated by the research summary where all queries returned no results), we need to infer the probability of outcomes based on historical patterns, the nature of manga publication schedules, and any auxiliary data available (such as author comments or publication pressures).
+
+**Historical Context:** Manga series, especially popular ones like Chainsaw Man, often follow a predictable pattern regarding breaks, typically tied to either the author's schedule, special holidays in Japan, or magazine publication schedules. Without specific data, we can estimate that breaks might occur around certain times of the year or after a certain number of chapters due to these factors.
+
+- **Probability of YES (Break occurring):** Assuming Chainsaw Man follows a regular pattern of breaks (e.g., every 10-15 chapters or around major holidays), and without specific counter-indications for chapters 188 and 189, a baseline estimate might be a 30% chance of a break, considering the general rarity of breaks but acknowledging they do happen.
+  
+- **Probability of NO (No break occurring):** Conversely, this would imply a 70% chance of no break occurring, based on the assumption that breaks are less common than regular publications.
+
+### 2. Trading Edges
+
+The current market probability is approximately 50.25%, which is significantly different from the estimated probabilities based on historical patterns and general manga publication trends.
+
+- **Edge on NO (No break):** Given our analysis, the NO position is undervalued in the market, with our estimate being 70% compared to the market's implied probability of around 49.75%. This presents a potential edge of approximately 20.25 percentage points.
+
+### 3. Key Factors Influencing the Outcome
+
+- **Publication Patterns:** Regular schedules vs. breaks tied to holidays or significant events.
+- **Author's Health and Schedule:** Any known issues or statements from the author could significantly impact publication schedules.
+- **Magazine Schedules:** Any changes in the publication schedule of the magazine (e.g., Shonen Jump) that serializes Chainsaw Man could influence the occurrence of breaks.
+- **Leaks or Announcements:** Any early information from leakers or official announcements can drastically change probabilities.
+
+### 4. Confidence Level in the Analysis
+
+Given the lack of specific, direct information about the immediate future of the Chainsaw Man publication schedule, the confidence level in this analysis is moderate. The estimates are based on general patterns rather than specific, actionable intelligence. Therefore, while there is a reasonable basis for the identified trading edge, the confidence level can't be as high as it would be with direct information. The confidence level is around 60% due to the reliance on historical patterns and the inherent unpredictability of manga publication schedules.
+
+### Conclusion and Actionable Insight
+
+Based on this analysis, there appears to be a trading opportunity in taking a position on NO (no break occurring) due to the identified edge between the market pricing and the estimated probability based on historical and structural analysis. However, given the moderate confidence level, it would be prudent to manage risk appropriately, possibly by allocating a smaller portion of one's trading capital to this opportunity.
+
+This situation underscores the importance of continuous monitoring for new information that could affect the outcome probability. Any new data, especially leaks or official announcements, should be integrated into the analysis to adjust positions accordingly.
+
+
+Key Analysis Metrics:
+------------------
+Estimated Probability: None
+Confidence Level: None
+
+Key Decision Factors:
+No key factors identified
+
+
+DECISION MAKING PROCESS
+---------------------
+
+Analysis Summary:
+---------------
+No betting opportunity identified
+
+
+EXECUTION OUTCOME
+---------------
+Result: NO TRADE
+Reason: No trading opportunity
+Details: Analysis did not recommend a trade
+
+================================================================================
+
+
