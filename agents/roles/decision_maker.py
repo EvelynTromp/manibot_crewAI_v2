@@ -66,8 +66,20 @@ class DecisionMakerAgent(Agent):
         # Calculate edge (difference between our estimate and market probability)
         edge = abs(estimated_prob - market_prob)
         
+        # Adjust minimum edge based on market metrics
+        base_min_edge = 0.03  # Reduced from 0.05 for pre-qualified markets
+        
+        # Adjust required edge based on market quality metrics
+        metrics = market_data.get('metrics', {})
+        min_edge = base_min_edge
+        
+        if metrics:
+            # Reduce required edge for high-quality markets
+            if (len(market_data.get('traders', [])) >= 5 and 
+                float(market_data.get('totalLiquidity', 0)) >= 50):
+                min_edge *= 0.8  # 20% reduction in required edge
+        
         # Only bet if we have a significant edge
-        min_edge = 0.05  # Minimum 5% edge required
         if edge < min_edge:
             return None
         
@@ -77,9 +89,17 @@ class DecisionMakerAgent(Agent):
             edge * confidence
         )
         
-        # Adjust for market liquidity
+        # Adjust max bet ratio based on market quality
+        default_max_ratio = 0.15  # Increased from 0.10 for pre-qualified markets
+        max_bet_ratio = default_max_ratio
+        
+        if metrics:
+            # Allow larger bets for more liquid markets
+            if float(market_data.get('totalLiquidity', 0)) >= 100:
+                max_bet_ratio = 0.20
+        
+        # Calculate maximum bet based on liquidity
         liquidity = float(market_data.get('totalLiquidity', 0))
-        max_bet_ratio = 0.1  # Don't bet more than 10% of liquidity
         max_bet = liquidity * max_bet_ratio
         
         bet_amount = min(base_bet, max_bet)
@@ -88,8 +108,32 @@ class DecisionMakerAgent(Agent):
             'amount': round(bet_amount, 2),
             'probability': estimated_prob,
             'edge': edge,
-            'confidence': confidence
+            'confidence': confidence,
+            'market_quality_score': self._calculate_market_quality_score(market_data)
         }
+
+    def _calculate_market_quality_score(self, market_data: Dict) -> float:
+        """Calculate a quality score for the market based on key metrics."""
+        base_score = 0.0
+        
+        # Add points for each positive market characteristic
+        if len(market_data.get('traders', [])) >= 5:
+            base_score += 0.2
+        
+        if float(market_data.get('totalLiquidity', 0)) >= 50:
+            base_score += 0.2
+            
+        if float(market_data.get('volume', 0)) >= 10:
+            base_score += 0.2
+            
+        metrics = market_data.get('metrics', {})
+        if metrics.get('liquidity_per_trader', 0) >= 10:
+            base_score += 0.2
+            
+        if metrics.get('trades_per_trader', 0) >= 2:
+            base_score += 0.2
+            
+        return min(base_score, 1.0)
 
     async def validate_decision(self, 
                               market_data: Dict, 
