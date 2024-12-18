@@ -30,7 +30,7 @@ class MarketCrew(BaseCrew):
         
         logger.info("Market crew initialized with enhanced reporting capabilities")
 
-    async def scan_markets(self, limit: int = 3) -> List[Dict]:
+    async def scan_markets(self, limit: int = 1) -> List[Dict]: #  limit here sets how many markets will be analyzed during a single scan
         """Scan for trading opportunities across multiple markets with comprehensive reporting."""
         try:
             # Start new scan session

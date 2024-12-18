@@ -74,66 +74,46 @@ class GPTClient:
             "reasoning": analysis
         }
         
-        # Enhanced parsing to capture trading-specific insights
-        for line in lines:
-            line = line.strip().lower()
-            
-            # Look for probability estimates
-            if "probability:" in line or "likelihood:" in line:
+        # Process the entire text as one string to handle multi-line content
+        text = ' '.join(lines).lower()
+        
+        # Look for probability patterns
+        import re
+        prob_patterns = [
+            r"probability of (\d+)%",
+            r"probability: (\d+)%",
+            r"estimate.*?(\d+)%",
+            r"probability.*?(\d+)%"
+        ]
+        
+        for pattern in prob_patterns:
+            if match := re.search(pattern, text):
                 try:
-                    # Extract probability percentage and convert to float
-                    prob_text = line.split(":")[-1].strip()
-                    # Handle percentage or decimal format
-                    if "%" in prob_text:
-                        prob = float(prob_text.rstrip("%")) / 100
-                    else:
-                        prob = float(prob_text)
-                    result["estimated_probability"] = prob
-                except ValueError:
-                    continue
-            
-            # Extract confidence level
-            elif "confidence:" in line:
-                try:
-                    conf_text = line.split(":")[-1].strip()
-                    if "%" in conf_text:
-                        conf = float(conf_text.rstrip("%")) / 100
-                    else:
-                        conf = float(conf_text)
-                    result["confidence_level"] = conf
-                except ValueError:
-                    continue
-            
-            # Capture key factors
-            elif "factor:" in line or "• " in line:
-                factor = line.split(":")[-1].strip() if ":" in line else line.replace("•", "").strip()
-                if factor:
-                    result["key_factors"].append(factor)
-            
-            # Look for edge identification
-            elif "edge:" in line:
-                try:
-                    edge_text = line.split(":")[-1].strip()
-                    if "%" in edge_text:
-                        edge = float(edge_text.rstrip("%")) / 100
-                    else:
-                        edge = float(edge_text)
-                    result["edge"] = edge
+                    result["estimated_probability"] = float(match.group(1)) / 100
+                    break
                 except ValueError:
                     continue
         
-        # Default to more active trading stance when probability is identified
-        if result["estimated_probability"] is not None:
-            result["recommended_position"] = "YES" if result["estimated_probability"] > 0.55 else "NO"
-            
-            # Calculate basic edge if market probability available
-            market_prob = float(market_data.get("probability", 0))
-            if market_prob:
-                result["edge"] = abs(result["estimated_probability"] - market_prob)
+        # Extract confidence level
+        conf_patterns = [
+            r"confidence level.*?(high|moderate|low)",
+            r"confidence.*?(high|moderate|low)",
+            r"confidence: (high|moderate|low)"
+        ]
+        
+        for pattern in conf_patterns:
+            if match := re.search(pattern, text):
+                confidence_map = {"high": 0.9, "moderate": 0.6, "low": 0.3}
+                result["confidence_level"] = confidence_map[match.group(1)]
+                break
+        
+        # Extract key factors
+        if "key factors" in text:
+            factors_section = text.split("key factors")[1].split("###")[0]
+            factors = re.findall(r"[-•*]\s*(.*?)(?=[-•*]|$)", factors_section)
+            result["key_factors"] = [f.strip() for f in factors if f.strip()]
         
         return result
-    
-
     
     async def validate_decision(self, market_data: Dict, analysis: Dict, proposed_bet: Dict) -> bool:
         """
