@@ -104,7 +104,7 @@ class GPTClient:
                 try:
                     result["confidence_level"] = float(match.group(1)) / 100
                     break
-                
+
                 except ValueError:
                     continue
         
@@ -140,7 +140,7 @@ class GPTClient:
         2. Are there any red flags in the analysis?
         3. Is the probability estimate well-justified?
 
-        Respond with a clear YES or NO and explanation.
+        After explaining your reasoning in depth, end with a final "my final answer is" followed by either a "YES WE SHOULD TRADE" or "NO WE SHOULD NOT TRADE"
         """
 
         response = await self.client.chat.completions.create(
@@ -150,5 +150,9 @@ class GPTClient:
             max_tokens=settings.MAX_TOKENS
         )
         
-        validation = response.choices[0].message.content.strip().upper()
-        return validation.startswith("YES")
+        print("Response from chat GTP about validation: ", response)
+        print(response)
+        #validation = response.choices[0].message.content.strip().upper()
+
+        #print("validation: ")
+        return "YES WE SHOULD TRADE" in response.choices[0].message.content

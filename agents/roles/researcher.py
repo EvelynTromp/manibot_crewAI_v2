@@ -72,6 +72,11 @@ class ResearcherAgent(Agent):
                 if market_id in analyzed_markets:
                     logger.info(f"Skipping recently analyzed market: {market_id}")
                     continue
+                
+                if market.get('outcomeType') == 'MULTIPLE_CHOICE':
+                    logger.info(f"Skipping multiple choice market: {market_id}")
+                    continue
+
                     
                 logger.info(f"Analyzing market: {market.get('question', 'No question')}")
                 logger.info(f"Liquidity: {market.get('totalLiquidity', 0)}")
