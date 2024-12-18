@@ -102,7 +102,7 @@ python main.py --scan
 python main.py --market MARKET_ID
 ```
 
-3. Monitor active positions:
+3. Monitor active positions (doesn't work yet):
 ```bash
 python main.py --monitor
 ```
