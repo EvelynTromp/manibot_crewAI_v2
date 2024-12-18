@@ -1,5 +1,5 @@
 # ManiBot - Autonomous Prediction Market Trading Bot
-
+NOTE TO EVELYN: THIS CURRENTLY CONTAINS YOUR ACTUAL API KEYS!!!!! DO NOT MAKE PUBLIC!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ## TLDR
 - This is an autonomous trading bot that uses GPT-4 to analyze and trade on Manifold Markets
 - Three main components:
@@ -42,7 +42,7 @@ Key Settings (config/settings.py):
 
 ## Important Notice
 
-This bot deals with real money on Manifold Markets. Always start with small amounts and monitor the bot's behavior carefully. The authors are not responsible for any financial losses.
+This bot deals with fake money on Manifold Markets (mana).
 
 ## Prerequisites
 
@@ -61,23 +61,11 @@ git clone https://github.com/yourusername/manibot_crewAI_v2.git
 cd manibot_crewAI_v2
 ```
 
-2. Create and activate a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies:
+2. Install dependencies:
 ```bash
 pip install -r requirements.txt
-```
 
-4. Set up your configuration by copying `.env.example` to `.env`:
-```bash
-cp .env.example .env
-```
-
-5. Edit `.env` with your API keys:
+3. Edit `settings.py` with your API keys:
 ```env
 MANIFOLD_API_KEY=your_manifold_key
 OPENAI_API_KEY=your_openai_key
@@ -185,21 +173,6 @@ To extend the bot's functionality:
 3. Modify trading logic in `agents/roles/decision_maker.py`
 4. Add new API integrations in `core/`
 
-## Logging
-
-Logs are stored in `manibot.log`. The logging level can be configured in `settings.py`:
-
-```python
-LOG_LEVEL = "INFO"  # Options: DEBUG, INFO, WARNING, ERROR
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
 
 ## Acknowledgments
 
@@ -207,6 +180,3 @@ LOG_LEVEL = "INFO"  # Options: DEBUG, INFO, WARNING, ERROR
 - [Manifold Markets](https://manifold.markets)
 - [OpenAI](https://openai.com)
 
-## Risk Warning
-
-Trading involves risk of loss. This bot is experimental software and should be used with caution. Always start with small amounts and monitor performance carefully.
