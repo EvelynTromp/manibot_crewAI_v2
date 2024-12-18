@@ -73,7 +73,7 @@ class GPTClient:
         }
         
         # Process the entire text as one string to handle multi-line content
-        text = ' '.join(lines).lower()
+        text = analysis.lower()
         
         # Look for probability patterns
         import re
