@@ -53,7 +53,7 @@ class DecisionMakerAgent(Agent):
                 research_data['market_data']
             )
             analysis['bet_recommendation'] = bet_recommendation
-        
+            
         return analysis
 
 

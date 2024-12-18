@@ -1,20 +1,12 @@
-# Standard library imports
 from datetime import datetime, timezone
 import logging
-
-# Type hinting imports
 from typing import Dict, List, Optional, Union
-
-# Third-party imports
 from crewai import Agent
-from pydantic import BaseModel, Field
-
-# Local imports
 from core.search_client import SearchClient
 from core.manifold_client import ManifoldClient
+from utils.database import DatabaseClient
 from config.settings import settings
 
-# Initialize logger
 logger = logging.getLogger(__name__)
 
 
@@ -35,7 +27,7 @@ class ResearcherAgent(Agent):
             allow_delegation=False
         )
         
-        # Initialize instance variables without direct assignment
+        # Initialize instance variables
         self._search_client = None
         self._manifold_client = None
         self._last_market_id = None  # Track last fetched market for pagination
@@ -56,6 +48,62 @@ class ResearcherAgent(Agent):
         if self._manifold_client is None:
             self._manifold_client = ManifoldClient()
         return self._manifold_client
+
+    async def get_active_markets(self, limit: int = 10) -> List[Dict]:
+        """Get a filtered list of promising active markets, excluding recently analyzed ones."""
+        try:
+            # Get more markets initially to ensure we have enough after filtering
+            initial_limit = limit * 3
+            logger.info(f"Fetching initial {initial_limit} markets...")
+            
+            markets = await self.manifold_client.get_markets(limit=initial_limit)
+            logger.info(f"Received {len(markets)} markets from API")
+            
+            # Get recently analyzed market IDs
+            analyzed_markets = self._db_client.get_recently_analyzed_markets(hours=24)
+            logger.info(f"Found {len(analyzed_markets)} recently analyzed markets")
+            
+            # Filter for interesting markets that haven't been recently analyzed
+            active_markets = []
+            for market in markets:
+                market_id = market.get('id')
+                
+                # Skip if recently analyzed
+                if market_id in analyzed_markets:
+                    logger.info(f"Skipping recently analyzed market: {market_id}")
+                    continue
+                    
+                logger.info(f"Analyzing market: {market.get('question', 'No question')}")
+                logger.info(f"Liquidity: {market.get('totalLiquidity', 0)}")
+                logger.info(f"Volume: {market.get('volume', 0)}")
+                
+                if self._is_market_interesting(market):
+                    logger.info("Market passed filters!")
+                    market['metrics'] = self._calculate_market_metrics(market)
+                    active_markets.append(market)
+                    
+                    # Record this market analysis
+                    self._db_client.record_market_analysis(market)
+                else:
+                    logger.info("Market filtered out")
+            
+            # Sort markets by potential
+            sorted_markets = sorted(
+                active_markets,
+                key=lambda x: (
+                    float(x.get('totalLiquidity', 0)), 
+                    float(x.get('volume', 0))
+                ),
+                reverse=True
+            )
+            
+            logger.info(f"Found {len(sorted_markets)} markets after filtering")
+            return sorted_markets[:limit]
+            
+        except Exception as e:
+            logger.error(f"Error getting active markets: {str(e)}")
+            raise
+
 
     async def research_market(self, market_id: str) -> Dict:
         """

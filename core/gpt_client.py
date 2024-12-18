@@ -9,17 +9,6 @@ class GPTClient:
     
 
     async def analyze_market(self, market_data: Dict, research_data: str) -> Dict:
-        """
-        Analyze market data and research to generate trading insights and recommendations.
-        Now optimized for more active trading while maintaining risk management.
-        
-        Args:
-            market_data: Dictionary containing market information
-            research_data: String containing research findings
-            
-        Returns:
-            Dictionary containing analysis and recommendations
-        """
         prompt = f"""
         You are an experienced prediction market trader with a track record of identifying profitable opportunities.
         Your goal is to find trading edges while managing risk appropriately.
@@ -43,18 +32,24 @@ class GPTClient:
         - Lack of immediate news doesn't mean no trade - structural factors matter
         - Balance between being opportunistic and managing risk
         
-        Provide your analysis with numerical probability estimates when possible.
-        Even with limited information, if you identify an edge, express it quantitatively.
-        Think step-by-step about your reasoning, focusing on finding actionable opportunities.
+        Provide your detailed analysis first, then end with a structured summary in exactly this format:
+
+        STRUCTURED SUMMARY:
+        Probability: [Your probability estimate as a percentage, e.g. 45%]
+        Confidence: [Your confidence level as a percentage, e.g. 70%]
+        Key Factors:
+        - [First key factor]
+        - [Second key factor]
+        - [Third key factor]
+        
+        Your analysis should always end with this structured summary section using exactly these headings.
         """
 
         response = await self.client.chat.completions.create(
             model=self.model,
             messages=[{
                 "role": "system",
-                "content": "You are an active prediction market trader. While you maintain rigorous analysis, "
-                          "you look for trading opportunities and are willing to make calculated bets when "
-                          "you identify even small edges. You always provide specific probability estimates."
+                "content": "You are an active prediction market trader who always provides structured analysis summaries."
             },
             {"role": "user", "content": prompt}],
             temperature=0.7,
@@ -63,10 +58,13 @@ class GPTClient:
         
         analysis = response.choices[0].message.content
         return self._parse_analysis(analysis)
-    
+
+
     def _parse_analysis(self, analysis: str) -> Dict:
         """Parse the GPT analysis into a structured format with enhanced trading focus."""
-        lines = analysis.split('\n')
+        # Split the analysis into main body and structured summary
+        parts = analysis.split("STRUCTURED SUMMARY:")
+        
         result = {
             "estimated_probability": None,
             "key_factors": [],
