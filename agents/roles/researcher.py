@@ -17,6 +17,9 @@ from config.settings import settings
 # Initialize logger
 logger = logging.getLogger(__name__)
 
+
+import random
+
 class ResearcherAgent(Agent):
     """Agent responsible for market research and analysis."""
     
@@ -35,6 +38,10 @@ class ResearcherAgent(Agent):
         # Initialize instance variables without direct assignment
         self._search_client = None
         self._manifold_client = None
+        self._last_market_id = None  # Track last fetched market for pagination
+        self._seen_markets = set()  # Track markets we've already analyzed
+
+
         
     @property
     def search_client(self):
@@ -128,6 +135,7 @@ class ResearcherAgent(Agent):
         
         return summary
 
+
     async def get_active_markets(self, limit: int = 10) -> List[Dict]:
         """Get a filtered list of promising active markets."""
         try:
@@ -135,6 +143,7 @@ class ResearcherAgent(Agent):
             initial_limit = limit * 3
             logger.info(f"Fetching initial {initial_limit} markets...")
             
+            # Get markets (the randomization is handled inside get_markets now)
             markets = await self.manifold_client.get_markets(limit=initial_limit)
             logger.info(f"Received {len(markets)} markets from API")
             
@@ -168,7 +177,6 @@ class ResearcherAgent(Agent):
         except Exception as e:
             logger.error(f"Error getting active markets: {str(e)}")
             raise
-
 
 
 

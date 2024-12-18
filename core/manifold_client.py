@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 from typing import Dict, List, Optional
 from config.settings import settings
+import random
 
 class ManifoldClient:
     def __init__(self):
@@ -20,10 +21,25 @@ class ManifoldClient:
                 response.raise_for_status()
                 return await response.json()
     
+    
     async def get_markets(self, limit: int = 50) -> List[Dict]:
         """Get list of markets."""
+        # First get a list of market IDs to help with random selection
+        all_markets = await self._make_request("GET", "markets?limit=100")
+        if not all_markets:
+            return []
+            
+        # Randomly select a starting point
+        start_idx = random.randint(0, max(0, len(all_markets) - limit - 1))
+        
+        # If we have a random starting point, use that market's ID as the 'before' parameter
+        if start_idx > 0:
+            before_id = all_markets[start_idx]['id']
+            return await self._make_request("GET", f"markets?limit={limit}&before={before_id}")
+        
+        # If we're starting from the beginning, just get the first batch
         return await self._make_request("GET", f"markets?limit={limit}")
-    
+
     async def get_market(self, market_id: str) -> Dict:
         """Get details of a specific market."""
         return await self._make_request("GET", f"market/{market_id}")

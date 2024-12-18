@@ -1,0 +1,370 @@
+
+####################################################################################################
+CONSOLIDATED SCAN REPORT
+####################################################################################################
+Scan Start Time: 2024-12-17 23:41:10
+End Time: 2024-12-17 23:43:01
+Total Markets Analyzed: 3
+
+
+================================================================================
+MARKET ANALYSIS REPORT - 2024-12-17 23:41:50
+================================================================================
+
+MARKET OVERVIEW
+--------------
+Market ID: NNlQRI2SuS
+Question: Which stocks will outperform the S&P 500 during 2025?📊 📈💰🤑💳
+Created Time: 2024-12-17 19:46:18
+Close Time: 2026-01-01 07:59:00
+
+Market Status:
+* Trading Volume: 90
+* Total Liquidity: 1400
+* Current Probability: 0.00%
+* Market Type: MULTIPLE_CHOICE (cpmm-multi-1)
+* Unique Bettor Count: 4
+
+Market Description:
+Resolution Criteria A stock will resolve YES if its percentage return exceeds
+the S&P 500's percentage return for the calendar year 2025 (Jan 1, 2025 - Dec
+31, 2025) A stock will resolve NO if its percentage return is equal to or less
+than the S&P 500's return If a stock is delisted, acquired, or undergoes a major
+corporate restructuring, it will be evaluated based on the return up to that
+event If a stock splits or reverse splits, the returns will be adjusted
+accordingly
+
+DETAILED RESEARCH ANALYSIS
+------------------------
+Research Queries and Results:
+
+Query 1: Which stocks will outperform the S&P 500 during 2025?📊 📈💰🤑💳
+--------------------------------------------------------------------------------
+No results found for: Which stocks will outperform the S&P 500 during 2025?📊 📈💰🤑💳
+
+Query 2: latest news Which stocks will outperform the S&P 500 during 2025?📊 📈💰🤑💳
+--------------------------------------------------------------------------------
+No results found for: latest news Which stocks will outperform the S&P 500 during 2025?📊 📈💰🤑💳
+
+Query 3: analysis Which stocks will outperform the S&P 500 during 2025?📊 📈💰🤑💳
+--------------------------------------------------------------------------------
+No results found for: analysis Which stocks will outperform the S&P 500 during 2025?📊 📈💰🤑💳
+
+Query 4: prediction Which stocks will outperform the S&P 500 during 2025?📊 📈💰🤑💳
+--------------------------------------------------------------------------------
+No results found for: prediction Which stocks will outperform the S&P 500 during 2025?📊 📈💰🤑💳
+
+Query 5: expert opinion Which stocks will outperform the S&P 500 during 2025?📊 📈💰🤑💳
+--------------------------------------------------------------------------------
+No results found for: expert opinion Which stocks will outperform the S&P 500 during 2025?📊 📈💰🤑💳
+
+
+
+GPT ANALYSIS PROCESS
+------------------
+
+Step-by-Step Analysis Process:
+----------------------------
+Given the market information and the absence of specific research findings on which stocks will outperform the S&P 500 during 2025, my analysis will rely on a combination of general market knowledge, the current state of the prediction market, and known factors that can influence stock performance relative to the broader market. The key to finding a trading edge in this scenario is to assess both the micro and macroeconomic factors that could affect these companies and the broader market, along with any potential technological or sector-specific trends that could come into play by 2025.
+
+### 1. Probability of Each Possible Outcome
+
+- **Nvidia, AMD, Tesla, Amazon, Google, Meta, Microsoft, TSMC, Micron, Visa, Mastercard, Apple, Palantir**: Given the lack of specific research findings, assigning probabilities to these stocks outperforming the S&P 500 in 2025 involves significant speculation. However, based on general market trends and the companies' current trajectories, we can infer that tech companies, especially those involved in AI, semiconductors, and electric vehicles, may have a higher chance of outperforming due to the growing reliance on technology and sustainable energy.
+
+- **Nvidia, AMD, TSMC, Micron**: These companies are deeply involved in the semiconductor industry, which is expected to see continued growth, especially with advancements in AI, 5G, and electric vehicles. **Probability: 55-60%**
+
+- **Tesla**: Given its leadership in electric vehicles and energy solutions, coupled with expected growth in these sectors, Tesla has a decent chance of outperforming. **Probability: 60%**
+
+- **Amazon, Google, Meta, Apple**: As tech giants, these companies have diversified interests and strong market positions, but face regulatory risks and market saturation. **Probability: 50-55%**
+
+- **Visa, Mastercard**: Fintech innovation poses both opportunities and threats, but their entrenched positions in global payments give them a solid base. **Probability: 45-50%**
+
+- **Palantir**: Given its niche in data analytics and government contracts, its performance could swing widely based on contract wins or losses. **Probability: 50%**
+
+### 2. Trading Edges
+
+- **Micron (73.59%)**: This probability seems overly optimistic even considering the semiconductor industry's growth prospects. **Suggested trading edge: Short Micron**.
+
+- **Tesla (61.04%)**: While optimistic, this aligns closely with my assessment, leaving little edge.
+
+- **Visa (42.51%) and Mastercard (38.96%)**: These probabilities seem slightly pessimistic given their solid market positions. **Suggested trading edge: Long Visa and Mastercard**.
+
+### 3. Key Factors Influencing Outcome
+
+- **Technological Advancements**: Companies leading in innovation (AI, EVs, semiconductors) are more likely to outperform.
+- **Regulatory Changes**: Could impact big tech companies significantly.
+- **Global Economic Conditions**: Affect all companies but especially those with international exposure.
+- **Sector Trends**: Movement towards sustainability and digital transformation.
+
+### 4. Confidence Level in Analysis
+
+Given the speculative nature of predicting stock performance two years in advance and the lack of specific research findings, my confidence level in this analysis is moderate, around 60-70%. The suggested trades are based on general market trends and the current positioning of these companies, assuming no major unforeseen events disrupt these trajectories.
+
+### Conclusion
+
+In conclusion, while there are uncertainties in predicting which stocks will outperform the S&P 500 in 2025, analyzing current trends and company positions provides us with a reasonable basis for making educated guesses. The recommended trades (short Micron, long Visa, and Mastercard) are identified based on perceived discrepancies between market probabilities and my own estimates, providing potential edges for trading. However, due to the speculative nature of this analysis, these positions should be monitored closely for any market changes.
+
+
+Key Analysis Metrics:
+------------------
+Estimated Probability: None
+Confidence Level: None
+
+Key Decision Factors:
+No key factors identified
+
+
+DECISION MAKING PROCESS
+---------------------
+
+Analysis Summary:
+---------------
+No betting opportunity identified
+
+
+EXECUTION OUTCOME
+---------------
+Result: NO TRADE
+Reason: No trading opportunity
+Details: Analysis did not recommend a trade
+
+================================================================================
+
+
+
+================================================================================
+MARKET ANALYSIS REPORT - 2024-12-17 23:42:24
+================================================================================
+
+MARKET OVERVIEW
+--------------
+Market ID: d65g2C20cE
+Question: By the end of 2035, will real working lie detection exist?
+Created Time: 2024-12-17 22:11:33
+Close Time: 2035-12-30 07:59:00
+
+Market Status:
+* Trading Volume: 125
+* Total Liquidity: 1000
+* Current Probability: 44.14%
+* Market Type: BINARY (cpmm-1)
+* Unique Bettor Count: 2
+
+Market Description:
+This market will resolve yes if and only if working lie detection exists before
+2035. The nature of this question's precise resolution is somewhat difficult,
+but I put forward these as tentative criteria. The lie detection need not rely
+on any specific type of data- physiological, gestural, lexical or neural- or
+some combination- or anything else reasonably available would all be fine. A
+method that only works by making irrevocable and potentially unwanted
+alterations to a person does not count (e.g., wiring up their cortex surgically)
+I will not put an exact measure on how accurate the method needs to be, but it
+would have be quite substantially more accurate than existing methods. If it
+only works with the cooperation of the person being examined, so long as it is
+possible to verify whether or not they are cooperating independently, this
+counts. The legal status of the method is irrelevant. If there is ambiguity, I
+will resolve it by poll, and I will err on the side of judging that there is
+ambiguity. Update 2024-17-12 (PST): Truth compulsion methods (methods that force
+someone to tell the truth) will count as valid lie detection methods, as long as
+they meet the other criteria specified above. (AI summary of creator comment)
+
+DETAILED RESEARCH ANALYSIS
+------------------------
+Research Queries and Results:
+
+Query 1: By the end of 2035, will real working lie detection exist?
+--------------------------------------------------------------------------------
+No results found for: By the end of 2035, will real working lie detection exist?
+
+Query 2: latest news By the end of 2035, will real working lie detection exist?
+--------------------------------------------------------------------------------
+No results found for: latest news By the end of 2035, will real working lie detection exist?
+
+Query 3: analysis By the end of 2035, will real working lie detection exist?
+--------------------------------------------------------------------------------
+No results found for: analysis By the end of 2035, will real working lie detection exist?
+
+Query 4: prediction By the end of 2035, will real working lie detection exist?
+--------------------------------------------------------------------------------
+No results found for: prediction By the end of 2035, will real working lie detection exist?
+
+Query 5: expert opinion By the end of 2035, will real working lie detection exist?
+--------------------------------------------------------------------------------
+No results found for: expert opinion By the end of 2035, will real working lie detection exist?
+
+
+
+GPT ANALYSIS PROCESS
+------------------
+
+Step-by-Step Analysis Process:
+----------------------------
+### Probability of Each Possible Outcome
+
+Given the lack of specific research findings or expert opinions directly related to the development of real working lie detection by 2035, we'll have to rely on a broader analysis incorporating technological trends, historical advancements in related fields, and the criteria outlined in the market description. 
+
+1. **Feasibility and Technological Trends**: The development of a reliable lie detection technology by 2035 would necessitate significant advancements in neuroscience, artificial intelligence, and possibly other fields like biotechnology. Considering current trends, the integration of AI and neuroscience is accelerating, but it's still in relatively early stages. Given the 12-year timeframe, there is a plausible path to achieving the required technological leaps, especially with the inclusion of "truth compulsion methods" as a valid form of lie detection.
+
+2. **Regulatory and Ethical Considerations**: Even if the technology becomes available, its deployment could be hampered by ethical and legal challenges. However, the market criteria specify that legal status is irrelevant to the resolution, which somewhat mitigates this factor in our analysis.
+
+3. **Accuracy and Adoption Criteria**: The requirement that the method be "substantially more accurate than existing methods" and not require irreversible alterations to a person sets a high bar. It suggests a need for breakthroughs that are not merely incremental.
+
+**Estimated Probability**: Considering these factors, there's a cautious optimism that such technology could emerge by 2035, but significant hurdles remain. A rough estimate would place the probability of "YES" (real working lie detection existing by 2035) at around **35%**. This is below the current market probability of 44.14%, suggesting an overestimation by the market.
+
+### Trading Edges
+
+- The market's current probability for "YES" is 44.14%, while my analysis suggests a 35% probability. This indicates a **trading edge** in betting against the current market optimism (i.e., placing a bet on "NO").
+  
+### Key Factors Influencing the Outcome
+
+1. **Technological Advancements**: The pace and focus of relevant research in neuroscience, AI, and other enabling technologies.
+2. **Ethical and Legal Acceptance**: While not directly relevant to market resolution, these factors could influence the pace of development and public acceptance.
+3. **Public and Government Interest**: Increased funding and interest could accelerate research and development in this area.
+
+### Confidence Level in the Analysis
+
+Given the speculative nature of the technology in question and the lack of direct research findings or expert opinions, my confidence level in this analysis is **moderate**. It's based on inferred trends and extrapolation rather than solid, current evidence. Therefore, while the analysis provides a quantitative edge for trading, it's advisable to manage risk cautiously, keeping bets within a conservative range due to the inherent uncertainties in predicting technological breakthroughs over a 12-year horizon.
+
+
+Key Analysis Metrics:
+------------------
+Estimated Probability: None
+Confidence Level: None
+
+Key Decision Factors:
+No key factors identified
+
+
+DECISION MAKING PROCESS
+---------------------
+
+Analysis Summary:
+---------------
+No betting opportunity identified
+
+
+EXECUTION OUTCOME
+---------------
+Result: NO TRADE
+Reason: No trading opportunity
+Details: Analysis did not recommend a trade
+
+================================================================================
+
+
+
+================================================================================
+MARKET ANALYSIS REPORT - 2024-12-17 23:43:01
+================================================================================
+
+MARKET OVERVIEW
+--------------
+Market ID: ZE5ZAqL0Sl
+Question: Will US Border Patrol seize more fentanyl in 2025 than in 2024?
+Created Time: 2024-12-17 19:47:04
+Close Time: 2025-10-02 02:59:00
+
+Market Status:
+* Trading Volume: 20
+* Total Liquidity: 1000
+* Current Probability: 50.99%
+* Market Type: BINARY (cpmm-1)
+* Unique Bettor Count: 2
+
+Market Description:
+Resolved by comparing FY2024 seizures (21,889 lbs) with FY2025 seizures (so far
+2,124 lbs). FY2024 saw a decrease compared to FY2023 (27,023 lbs)
+https://www.cbp.gov/newsroom/stats/drug-seizure-statistics Note this market
+closes in October, after the end of the fiscal year. Factors to consider: Border
+enforcement Demand [image]
+
+DETAILED RESEARCH ANALYSIS
+------------------------
+Research Queries and Results:
+
+Query 1: Will US Border Patrol seize more fentanyl in 2025 than in 2024?
+--------------------------------------------------------------------------------
+No results found for: Will US Border Patrol seize more fentanyl in 2025 than in 2024?
+
+Query 2: latest news Will US Border Patrol seize more fentanyl in 2025 than in 2024?
+--------------------------------------------------------------------------------
+No results found for: latest news Will US Border Patrol seize more fentanyl in 2025 than in 2024?
+
+Query 3: analysis Will US Border Patrol seize more fentanyl in 2025 than in 2024?
+--------------------------------------------------------------------------------
+No results found for: analysis Will US Border Patrol seize more fentanyl in 2025 than in 2024?
+
+Query 4: prediction Will US Border Patrol seize more fentanyl in 2025 than in 2024?
+--------------------------------------------------------------------------------
+No results found for: prediction Will US Border Patrol seize more fentanyl in 2025 than in 2024?
+
+Query 5: expert opinion Will US Border Patrol seize more fentanyl in 2025 than in 2024?
+--------------------------------------------------------------------------------
+No results found for: expert opinion Will US Border Patrol seize more fentanyl in 2025 than in 2024?
+
+
+
+GPT ANALYSIS PROCESS
+------------------
+
+Step-by-Step Analysis Process:
+----------------------------
+Given the market information and research data, let's analyze the potential trading opportunities and assess the probabilities of each outcome regarding whether the US Border Patrol will seize more fentanyl in 2025 than in 2024.
+
+### 1. Probability of Each Possible Outcome
+
+- **YES (Seize More in 2025 than 2024):** Given the decrease in seizures from FY2023 to FY2024 (from 27,023 lbs to 21,889 lbs), a further increase in the next fiscal year would require significant changes in either border enforcement strategies or a spike in fentanyl trafficking. Without specific data suggesting an increase in either factor, and considering the downward trend, the probability might lean slightly lower than the market suggests. **Estimated Probability: 45%**
+
+- **NO (Seize Less or the Same in 2025 as in 2024):** Considering the recent downward trend, unless new policies or strategies are implemented effectively within a short time frame, it's reasonable to assume the number might not significantly increase. **Estimated Probability: 55%**
+
+### 2. Trading Edges
+
+Comparing my probability estimates with the market's current probability (0.5099 for YES), there appears to be a small trading edge on the NO side.
+
+- **YES Edge:** Market - 50.99% vs. Estimate - 45% (No edge here; market overestimates the YES probability)
+- **NO Edge:** Market - 49.01% vs. Estimate - 55% (Edge found; market underestimates the NO probability)
+
+### 3. Key Factors Influencing the Outcome
+
+- **Border Enforcement:** Any significant changes or improvements in border security and enforcement could affect seizure rates.
+- **Demand:** Higher demand could lead to increased smuggling attempts, potentially increasing seizure rates if enforcement capabilities remain consistent or improve.
+- **Policy Changes:** New policies targeting fentanyl trafficking specifically could influence the outcome.
+- **External Factors:** Global and domestic events influencing drug trafficking routes and methods could also play a role.
+
+### 4. Confidence Level in the Analysis
+
+Given the lack of specific, forward-looking data or news coverage predicting changes in seizure rates for FY2025, and considering the recent trend and key influencing factors, my confidence in this analysis is moderate. I would place it at around **65%**. The assessment is heavily reliant on historical trends and general factors without specific insight into future changes in enforcement or trafficking. 
+
+### Actionable Opportunity
+
+Given the estimated probabilities and the identified edge on the NO side (believing the market underestimates the probability of seizing less or the same amount of fentanyl in 2025 as in 2024), a calculated position in favor of NO could be a viable trading opportunity. The difference between the market probability and my estimate suggests a roughly **6% edge**, which falls within the guideline for small but reliable edges worth considering for a trade.
+
+**Recommended Trade:** Consider taking a position on NO, recognizing that this is a calculated risk based on available data and the identified edge. Manage risk appropriately, keeping in mind the moderate confidence level and the potential for unforeseen changes affecting the outcome.
+
+
+Key Analysis Metrics:
+------------------
+Estimated Probability: None
+Confidence Level: None
+
+Key Decision Factors:
+No key factors identified
+
+
+DECISION MAKING PROCESS
+---------------------
+
+Analysis Summary:
+---------------
+No betting opportunity identified
+
+
+EXECUTION OUTCOME
+---------------
+Result: NO TRADE
+Reason: No trading opportunity
+Details: Analysis did not recommend a trade
+
+================================================================================
+
+
