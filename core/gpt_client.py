@@ -9,17 +9,6 @@ class GPTClient:
     
 
     async def analyze_market(self, market_data: Dict, research_data: str) -> Dict:
-        """
-        Analyze market data and research to generate trading insights and recommendations.
-        Now optimized for more active trading while maintaining risk management.
-        
-        Args:
-            market_data: Dictionary containing market information
-            research_data: String containing research findings
-            
-        Returns:
-            Dictionary containing analysis and recommendations
-        """
         prompt = f"""
         You are an experienced prediction market trader with a track record of identifying profitable opportunities.
         Your goal is to find trading edges while managing risk appropriately.
@@ -43,18 +32,24 @@ class GPTClient:
         - Lack of immediate news doesn't mean no trade - structural factors matter
         - Balance between being opportunistic and managing risk
         
-        Provide your analysis with numerical probability estimates when possible.
-        Even with limited information, if you identify an edge, express it quantitatively.
-        Think step-by-step about your reasoning, focusing on finding actionable opportunities.
+        Provide your detailed analysis first, then end with a structured summary in exactly this format:
+
+        STRUCTURED SUMMARY:
+        Probability: [Your probability estimate as a percentage, e.g. 45%]
+        Confidence: [Your confidence level as a percentage, e.g. 70%]
+        Key Factors:
+        - [First key factor]
+        - [Second key factor]
+        - [Third key factor]
+        
+        Your analysis should always end with this structured summary section using exactly these headings.
         """
 
         response = await self.client.chat.completions.create(
             model=self.model,
             messages=[{
                 "role": "system",
-                "content": "You are an active prediction market trader. While you maintain rigorous analysis, "
-                          "you look for trading opportunities and are willing to make calculated bets when "
-                          "you identify even small edges. You always provide specific probability estimates."
+                "content": "You are an active prediction market trader who always provides structured analysis summaries."
             },
             {"role": "user", "content": prompt}],
             temperature=0.7,
@@ -63,10 +58,13 @@ class GPTClient:
         
         analysis = response.choices[0].message.content
         return self._parse_analysis(analysis)
-    
+
+
     def _parse_analysis(self, analysis: str) -> Dict:
         """Parse the GPT analysis into a structured format with enhanced trading focus."""
-        lines = analysis.split('\n')
+        # Split the analysis into main body and structured summary
+        parts = analysis.split("STRUCTURED SUMMARY:")
+        
         result = {
             "estimated_probability": None,
             "key_factors": [],
@@ -74,67 +72,31 @@ class GPTClient:
             "reasoning": analysis
         }
         
-        # Enhanced parsing to capture trading-specific insights
-        for line in lines:
-            line = line.strip().lower()
+        if len(parts) > 1:
+            summary = parts[1].strip()
+            lines = summary.split('\n')
             
-            # Look for probability estimates
-            if "probability:" in line or "likelihood:" in line:
-                try:
-                    # Extract probability percentage and convert to float
+            for line in lines:
+                line = line.strip()
+                
+                if line.startswith("Probability:"):
                     prob_text = line.split(":")[-1].strip()
-                    # Handle percentage or decimal format
                     if "%" in prob_text:
-                        prob = float(prob_text.rstrip("%")) / 100
-                    else:
-                        prob = float(prob_text)
-                    result["estimated_probability"] = prob
-                except ValueError:
-                    continue
-            
-            # Extract confidence level
-            elif "confidence:" in line:
-                try:
+                        result["estimated_probability"] = float(prob_text.rstrip("%")) / 100
+                        
+                elif line.startswith("Confidence:"):
                     conf_text = line.split(":")[-1].strip()
                     if "%" in conf_text:
-                        conf = float(conf_text.rstrip("%")) / 100
-                    else:
-                        conf = float(conf_text)
-                    result["confidence_level"] = conf
-                except ValueError:
-                    continue
-            
-            # Capture key factors
-            elif "factor:" in line or "• " in line:
-                factor = line.split(":")[-1].strip() if ":" in line else line.replace("•", "").strip()
-                if factor:
-                    result["key_factors"].append(factor)
-            
-            # Look for edge identification
-            elif "edge:" in line:
-                try:
-                    edge_text = line.split(":")[-1].strip()
-                    if "%" in edge_text:
-                        edge = float(edge_text.rstrip("%")) / 100
-                    else:
-                        edge = float(edge_text)
-                    result["edge"] = edge
-                except ValueError:
-                    continue
-        
-        # Default to more active trading stance when probability is identified
-        if result["estimated_probability"] is not None:
-            result["recommended_position"] = "YES" if result["estimated_probability"] > 0.55 else "NO"
-            
-            # Calculate basic edge if market probability available
-            market_prob = float(market_data.get("probability", 0))
-            if market_prob:
-                result["edge"] = abs(result["estimated_probability"] - market_prob)
+                        result["confidence_level"] = float(conf_text.rstrip("%")) / 100
+                        
+                elif line.startswith("-"):
+                    factor = line.strip("- ").strip()
+                    if factor:
+                        result["key_factors"].append(factor)
         
         return result
-    
 
-    
+
     async def validate_decision(self, market_data: Dict, analysis: Dict, proposed_bet: Dict) -> bool:
         """
         Double-check the betting decision for safety and rationality.
