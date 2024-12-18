@@ -36,7 +36,7 @@ class GPTClient:
 
         STRUCTURED SUMMARY:
         Probability: [Your probability estimate as a percentage, e.g. 45%]
-        Confidence: [Your confidence level as a percentage, e.g. 70%]
+        Confidence: [Your confidence level as a percentage]
         Key Factors:
         - [First key factor]
         - [Second key factor]
@@ -94,16 +94,19 @@ class GPTClient:
         
         # Extract confidence level
         conf_patterns = [
-            r"confidence level.*?(high|moderate|low)",
-            r"confidence.*?(high|moderate|low)",
-            r"confidence: (high|moderate|low)"
+            r"confidence level.*?(\d+)%",
+            r"confidence.*?(\d+)%",
+            r"confidence: (\d+)%"
         ]
         
         for pattern in conf_patterns:
             if match := re.search(pattern, text):
-                confidence_map = {"high": 0.9, "moderate": 0.6, "low": 0.3}
-                result["confidence_level"] = confidence_map[match.group(1)]
-                break
+                try:
+                    result["confidence_level"] = float(match.group(1)) / 100
+                    break
+                
+                except ValueError:
+                    continue
         
         # Extract key factors
         if "key factors" in text:

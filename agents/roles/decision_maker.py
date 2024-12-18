@@ -39,23 +39,41 @@ class DecisionMakerAgent(Agent):
         Returns:
             Dictionary containing analysis and trading recommendation
         """
-        # Analyze market using GPT
-        analysis = await self.gpt_client.analyze_market(
-            research_data['market_data'],
-            research_data['summary']
-        )
-        
-        # Determine optimal bet size if opportunity exists
-        if analysis['estimated_probability'] is not None:
-            bet_recommendation = self._calculate_bet_size(
-                analysis['estimated_probability'],
-                analysis['confidence_level'],
-                research_data['market_data']
+        try:
+            # Analyze market using GPT
+            analysis = await self.gpt_client.analyze_market(
+                research_data['market_data'],
+                research_data['summary']
             )
-            analysis['bet_recommendation'] = bet_recommendation
             
-        return analysis
-
+            # Validate required values exist and are numeric
+            if (analysis['estimated_probability'] is not None and 
+                analysis['confidence_level'] is not None):
+                
+                # Determine optimal bet size if opportunity exists
+                bet_recommendation = self._calculate_bet_size(
+                    analysis['estimated_probability'],
+                    analysis['confidence_level'],
+                    research_data['market_data']
+                )
+                if bet_recommendation:
+                    analysis['bet_recommendation'] = bet_recommendation
+            else:
+                # If we don't have valid probability and confidence, don't recommend a bet
+                analysis['bet_recommendation'] = None
+                
+            return analysis
+            
+        except Exception as e:
+            logger.error(f"Error in analyze_opportunity: {str(e)}")
+            # Return a safe default analysis
+            return {
+                "estimated_probability": None,
+                "key_factors": [],
+                "confidence_level": None,
+                "reasoning": str(e),
+                "bet_recommendation": None
+            }
 
 
 
@@ -70,7 +88,7 @@ class DecisionMakerAgent(Agent):
         edge = abs(estimated_prob - market_prob)
         
         # Adjust minimum edge based on market metrics
-        base_min_edge = 0.03  # Reduced from 0.05 for pre-qualified markets
+        base_min_edge = 0.02  # Reduced from 0.05 for pre-qualified markets
         
         # Adjust required edge based on market quality metrics
         metrics = market_data.get('metrics', {})
