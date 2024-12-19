@@ -44,17 +44,15 @@ class ManifoldClient:
         """Get details of a specific market."""
         return await self._make_request("GET", f"market/{market_id}")
     
-        # In manifold_client.py, modify the place_bet method:
     async def place_bet(self, market_id: str, amount: float, outcome: str, probability: float) -> Dict:
-        """Place a bet on a market.
-        
-        Args:
-            market_id (str): The ID of the market to bet on
-            amount (float): Amount to bet in M$
-            outcome (str): For binary markets: 'YES' or 'NO'
-            probability (float): Your probability estimate
-        """
+        """Place a bet on a market with enhanced debugging."""
         try:
+            # Get current market state
+            market = await self.get_market(market_id)
+            print(f"\nDEBUG: Current market state:")
+            print(f"Current probability: {market.get('probability')}")
+            print(f"Our target probability: {probability}")
+            
             # Format probability to two decimal places
             formatted_prob = round(probability, 2)
             
@@ -62,23 +60,42 @@ class ManifoldClient:
                 "contractId": market_id,
                 "amount": amount,
                 "outcome": outcome,
-                "limitProb": formatted_prob  # Changed from probability to limitProb
+                "limitProb": formatted_prob
             }
             
-            print(f"Placing bet with data: {data}")
+            print(f"\nDEBUG: Sending bet data:")
+            print(f"Amount: {amount}")
+            print(f"Outcome: {outcome}")
+            print(f"Limit Probability: {formatted_prob}")
             
             result = await self._make_request(
                 "POST", 
                 "bet",
                 data
             )
-            print(f"Bet result: {result}")
+            
+            print(f"\nDEBUG: Bet response details:")
+            print(f"Filled?: {result.get('isFilled')}")
+            print(f"Cancelled?: {result.get('isCancelled')}")
+            print(f"Actual amount filled: {result.get('amount')}")
+            print(f"Shares received: {result.get('shares')}")
+            print(f"Prob before: {result.get('probBefore')}")
+            print(f"Prob after: {result.get('probAfter')}")
+            
+            if not result.get('isFilled'):
+                print("\nDEBUG: Order not filled. Possible reasons:")
+                if result.get('probBefore', 0) > formatted_prob:
+                    print("- Limit probability is below market probability")
+                if result.get('amount', 0) == 0:
+                    print("- Order amount may be too small")
+                if result.get('isCancelled'):
+                    print("- Order was cancelled")
+                    
             return result
             
         except Exception as e:
-            print(f"Error placing bet: {str(e)}")
+            print(f"\nDEBUG: Error placing bet: {str(e)}")
             raise
-
 
 
 

@@ -5,7 +5,7 @@ from config.settings import settings
 class GPTClient:
     def __init__(self):
         self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-        self.model = "gpt-4-turbo-preview"
+        self.model = "gpt-4-turbo-preview" # gpt 4o for more advanced model
     
 
     async def analyze_market(self, market_data: Dict, research_data: str) -> Dict:
@@ -150,9 +150,7 @@ class GPTClient:
             max_tokens=settings.MAX_TOKENS
         )
         
-        print("Response from chat GTP about validation: ", response)
-        print(response)
-        #validation = response.choices[0].message.content.strip().upper()
+        #print("Response from chat GTP about validation: ", response)
 
-        #print("validation: ")
+
         return "YES WE SHOULD TRADE" in response.choices[0].message.content
