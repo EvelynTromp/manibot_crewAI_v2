@@ -251,7 +251,7 @@ Recommended Position:
                 all_dates = sorted(
                     [d for d in os.listdir(self.reports_dir) 
                     if os.path.isdir(os.path.join(self.reports_dir, d))],
-                    reverse=True  # Most recent dates will appear first
+                    reverse=True
                 )
             
             # Create new date directory with today's date
@@ -259,19 +259,16 @@ Recommended Position:
             date_dir = os.path.join(self.reports_dir, current_date)
             os.makedirs(date_dir, exist_ok=True)
             
-            # Generate unique filename that will sort correctly (timestamp first)
-            timestamp = self.scan_start_time.strftime('%H%M%S')  # Using only time for cleaner filenames
+            # Generate filename using seconds since midnight for guaranteed chronological sorting
+            midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            seconds_since_midnight = int((datetime.now() - midnight).total_seconds())
+            max_seconds = 24 * 60 * 60  # Total seconds in a day
+            inverse_seconds = max_seconds - seconds_since_midnight
+            
+            # Format as 6-digit number with leading zeros
+            timestamp = f"{inverse_seconds:06d}"
             filename = f"{timestamp}_consolidated_scan_report.txt"
             filepath = os.path.join(date_dir, filename)
-            
-            # Sort existing files in the current date directory in reverse order
-            existing_files = []
-            if os.path.exists(date_dir):
-                existing_files = sorted(
-                    [f for f in os.listdir(date_dir) 
-                    if os.path.isfile(os.path.join(date_dir, f))],
-                    reverse=True  # Most recent files will appear first
-                )
             
             # Create the consolidated report
             with open(filepath, 'w', encoding='utf-8') as f:
@@ -296,7 +293,7 @@ Recommended Position:
         except Exception as e:
             logger.error(f"Error saving consolidated report: {str(e)}")
             return ""
-
+        
     def format_console_summary(self, execution_data: Dict) -> str:
         """Format a concise summary for console output."""
         try:

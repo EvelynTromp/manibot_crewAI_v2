@@ -61,7 +61,7 @@ class SearchClient:
                             results.append(result)
                         return results
                     else:
-                        print(f"No items in response. Full response: {data}")
+                        # print(f"No items in response. Full response: {data}")
                         if "error" in data:
                             raise Exception(f"API error: {data['error']}")
                         return []
