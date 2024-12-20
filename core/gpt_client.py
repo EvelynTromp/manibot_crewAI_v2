@@ -8,7 +8,13 @@ class GPTClient:
         self.model = "gpt-4-turbo-preview" # gpt 4o for more advanced model
     
 
-    async def analyze_market(self, market_data: Dict, research_data: str) -> Dict:
+    async def analyze_market(self, market_data: Dict, research_data: str,  research_findings: List[Dict]) -> Dict:
+        
+        research_details = "\n\nDetailed Research Findings:\n"
+        for finding in research_findings:
+            research_details += f"\nQuery: {finding['query']}\n"
+            research_details += f"Results: {finding['results']}\n"
+        
         prompt = f"""
         You are an experienced prediction market trader with a track record of identifying profitable opportunities.
         Your goal is to find trading edges while managing risk appropriately.
@@ -22,8 +28,10 @@ class GPTClient:
         Market Information:
         {market_data}
 
-        Research Data:
+        Research Summary:
         {research_data}
+
+        {research_details}
 
         Important Trading Guidelines:
         - Look for small but reliable edges (3-5% differences from market price can be significant)
