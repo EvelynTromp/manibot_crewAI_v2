@@ -6,7 +6,6 @@ from crewai import Agent
 from core.search_client import SearchClient
 from core.manifold_client import ManifoldClient
 from core.gpt_client import GPTClient
-from utils.database import DatabaseClient
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -70,19 +69,12 @@ class ResearcherAgent(Agent):
             markets = await self.manifold_client.get_markets(limit=initial_limit)
             logger.info(f"Received {len(markets)} markets from API")
             
-            # Get recently analyzed market IDs
-            analyzed_markets = self._db_client.get_recently_analyzed_markets(hours=24)
-            logger.info(f"Found {len(analyzed_markets)} recently analyzed markets")
-            
+
             # Filter for interesting markets that haven't been recently analyzed
             active_markets = []
             for market in markets:
                 market_id = market.get('id')
                 
-                # Skip if recently analyzed
-                if market_id in analyzed_markets:
-                    logger.info(f"Skipping recently analyzed market: {market_id}")
-                    continue
                 
                 if market.get('outcomeType') == 'MULTIPLE_CHOICE':
                     logger.info(f"Skipping multiple choice market: {market_id}")
@@ -98,8 +90,7 @@ class ResearcherAgent(Agent):
                     market['metrics'] = self._calculate_market_metrics(market)
                     active_markets.append(market)
                     
-                    # Record this market analysis
-                    self._db_client.record_market_analysis(market)
+
                 else:
                     logger.info("Market filtered out")
             
