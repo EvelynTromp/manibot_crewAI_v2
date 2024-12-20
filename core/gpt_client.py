@@ -154,3 +154,55 @@ class GPTClient:
 
 
         return "YES WE SHOULD TRADE" in response.choices[0].message.content
+    
+    async def generate_search_queries(self, market_data: Dict) -> List[str]:
+        """
+        Generate contextually relevant search queries based on market analysis.
+        
+        This method analyzes the market question and context to generate
+        targeted search queries that will be most relevant for making a 
+        prediction.
+        """
+        prompt = f"""
+        You are an expert researcher helping to analyze a prediction market.
+        Based on the market question and context, generate 2-3 specific,
+        targeted search queries that would help evaluate the probability.
+
+        Market Question: {market_data.get('question', '')}
+        Description: {market_data.get('textDescription', '')}
+        Current Probability: {market_data.get('probability', 0)}
+        Close Time: {market_data.get('closeTime', 'Unknown')}
+
+        Consider:
+        1. What key information would most help predict this outcome?
+        2. What specific data points or trends would be valuable?
+        3. What expert analysis would be most relevant?
+
+        Generate queries that:
+        - Are specific and targeted rather than broad
+        - Focus on quantitative data when relevant
+        - Include temporal context when timing matters
+        - Look for expert analysis in the relevant domain
+
+        Format your response as a list of queries, one per line,
+        starting with 'QUERY:' for each one.
+        """
+
+        response = await self.client.chat.completions.create(
+            model=self.model,
+            messages=[{
+                "role": "system",
+                "content": "You are an expert researcher who generates precise, targeted search queries."
+            },
+            {"role": "user", "content": prompt}],
+            temperature=0.7
+        )
+
+        # Extract queries from response
+        queries = []
+        for line in response.choices[0].message.content.split('\n'):
+            if line.strip().startswith('QUERY:'):
+                query = line.replace('QUERY:', '').strip()
+                queries.append(query)
+
+        return queries

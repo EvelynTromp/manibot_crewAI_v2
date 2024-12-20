@@ -1,9 +1,11 @@
 from datetime import datetime, timezone
 import logging
+import asyncio
 from typing import Dict, List, Optional, Union
 from crewai import Agent
 from core.search_client import SearchClient
 from core.manifold_client import ManifoldClient
+from core.gpt_client import GPTClient
 from utils.database import DatabaseClient
 from config.settings import settings
 
@@ -30,6 +32,7 @@ class ResearcherAgent(Agent):
         # Initialize instance variables
         self._search_client = None
         self._manifold_client = None
+        self._gpt_client = None
         self._last_market_id = None  # Track last fetched market for pagination
         self._seen_markets = set()  # Track markets we've already analyzed
 
@@ -48,6 +51,14 @@ class ResearcherAgent(Agent):
         if self._manifold_client is None:
             self._manifold_client = ManifoldClient()
         return self._manifold_client
+    
+    @property
+    def gpt_client(self):
+        """Lazy initialization of GPT client."""
+        if self._gpt_client is None:
+            self._gpt_client = GPTClient()
+        return self._gpt_client
+
 
     async def get_active_markets(self, limit: int = 10) -> List[Dict]:
         """Get a filtered list of promising active markets, excluding recently analyzed ones."""
@@ -118,17 +129,21 @@ class ResearcherAgent(Agent):
             # Get market details
             market_data = await self.manifold_client.get_market(market_id)
             
-            # Generate search queries based on market question
-            question = market_data.get('question', '')
-            search_queries = self._generate_search_queries(question)
+            # Generate intelligent search queries
+            search_queries = await self._generate_search_queries(market_data)
             
-            # Gather research data
+            # Gather research data with rate-limited execution
             research_findings = []
             for query in search_queries:
+                # Add delay between searches to respect rate limits
+                if research_findings:  # Don't delay first query
+                    await asyncio.sleep(self.search_client.min_delay)
+                    
                 results = await self.search_client.search_and_summarize(query)
                 research_findings.append({
                     'query': query,
-                    'results': results
+                    'results': results,
+                    'rationale': 'GPT-generated targeted query'  # Added for transparency
                 })
             
             # Get market positions - make this optional
@@ -148,18 +163,6 @@ class ResearcherAgent(Agent):
             print(f"Error researching market {market_id}: {str(e)}")
             raise
 
-    def _generate_search_queries(self, question: str) -> List[str]:
-        """Generate relevant search queries based on market question."""
-        # Base query is the question itself
-        queries = [question]
-        
-        # Add variations
-        queries.append(f"latest news {question}")
-        queries.append(f"analysis {question}")
-        queries.append(f"prediction {question}")
-        queries.append(f"expert opinion {question}")
-        
-        return queries[:settings.MAX_SEARCH_RESULTS]  # Limit number of queries
 
     async def _generate_research_summary(self, 
                                      market_data: Dict, 
@@ -328,3 +331,35 @@ class ResearcherAgent(Agent):
         
         # Weighted average of scores
         return (volume_score * 0.4 + liquidity_score * 0.4 + trader_score * 0.2)
+    
+
+
+    async def _generate_search_queries(self, market_data: Dict) -> List[str]:
+        """
+        Generate intelligent search queries based on market analysis.
+        
+        This method replaces the static query generation with dynamic,
+        context-aware queries that target the most relevant information
+        for this specific market.
+        """
+        try:
+            # Get GPT-generated queries
+            queries = await self.gpt_client.generate_search_queries(market_data)
+            
+            if not queries:
+                # Fallback to basic query if GPT generation fails
+                return [market_data.get('question', '')]
+            
+            # Log the generated queries for analysis
+            logger.info("GPT generated the following search queries:")
+            for query in queries:
+                logger.info(f"- {query}")
+            
+            return queries
+
+        except Exception as e:
+            logger.error(f"Error generating GPT queries: {str(e)}")
+            # Fallback to basic query
+            return [market_data.get('question', '')]
+    
+   

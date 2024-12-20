@@ -237,33 +237,54 @@ Recommended Position:
             
         return decision
 
+
+
     def save_consolidated_report(self) -> str:
         """Save all analyses from the current scan session to a single file."""
         try:
             if not self.current_scan_analyses:
                 return ""
                 
-            # Create date-specific directory
-            date_dir = os.path.join(self.reports_dir, datetime.now().strftime('%Y-%m-%d'))
+            # Get all existing date directories and sort them in reverse chronological order
+            all_dates = []
+            if os.path.exists(self.reports_dir):
+                all_dates = sorted(
+                    [d for d in os.listdir(self.reports_dir) 
+                    if os.path.isdir(os.path.join(self.reports_dir, d))],
+                    reverse=True  # Most recent dates will appear first
+                )
+            
+            # Create new date directory with today's date
+            current_date = datetime.now().strftime('%Y-%m-%d')
+            date_dir = os.path.join(self.reports_dir, current_date)
             os.makedirs(date_dir, exist_ok=True)
             
-            # Generate unique filename for the scan session
-            timestamp = self.scan_start_time.strftime('%Y%m%d_%H%M%S')
-            filename = f"consolidated_scan_report_{timestamp}.txt"
+            # Generate unique filename that will sort correctly (timestamp first)
+            timestamp = self.scan_start_time.strftime('%H%M%S')  # Using only time for cleaner filenames
+            filename = f"{timestamp}_consolidated_scan_report.txt"
             filepath = os.path.join(date_dir, filename)
+            
+            # Sort existing files in the current date directory in reverse order
+            existing_files = []
+            if os.path.exists(date_dir):
+                existing_files = sorted(
+                    [f for f in os.listdir(date_dir) 
+                    if os.path.isfile(os.path.join(date_dir, f))],
+                    reverse=True  # Most recent files will appear first
+                )
             
             # Create the consolidated report
             with open(filepath, 'w', encoding='utf-8') as f:
                 # Write scan session header
                 f.write(f"""
-{'#'*100}
-CONSOLIDATED SCAN REPORT
-{'#'*100}
-Scan Start Time: {self.scan_start_time.strftime('%Y-%m-%d %H:%M:%S')}
-End Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-Total Markets Analyzed: {len(self.current_scan_analyses)}
+    {'#'*100}
+    CONSOLIDATED SCAN REPORT
+    {'#'*100}
+    Scan Start Time: {self.scan_start_time.strftime('%Y-%m-%d %H:%M:%S')}
+    End Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    Total Markets Analyzed: {len(self.current_scan_analyses)}
 
-""")
+    """)
                 
                 # Write all market analyses
                 for analysis in self.current_scan_analyses:
