@@ -237,33 +237,51 @@ Recommended Position:
             
         return decision
 
+
+
     def save_consolidated_report(self) -> str:
         """Save all analyses from the current scan session to a single file."""
         try:
             if not self.current_scan_analyses:
                 return ""
                 
-            # Create date-specific directory
-            date_dir = os.path.join(self.reports_dir, datetime.now().strftime('%Y-%m-%d'))
+            # Get all existing date directories and sort them in reverse chronological order
+            all_dates = []
+            if os.path.exists(self.reports_dir):
+                all_dates = sorted(
+                    [d for d in os.listdir(self.reports_dir) 
+                    if os.path.isdir(os.path.join(self.reports_dir, d))],
+                    reverse=True
+                )
+            
+            # Create new date directory with today's date
+            current_date = datetime.now().strftime('%Y-%m-%d')
+            date_dir = os.path.join(self.reports_dir, current_date)
             os.makedirs(date_dir, exist_ok=True)
             
-            # Generate unique filename for the scan session
-            timestamp = self.scan_start_time.strftime('%Y%m%d_%H%M%S')
-            filename = f"consolidated_scan_report_{timestamp}.txt"
+            # Generate filename using seconds since midnight for guaranteed chronological sorting
+            midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            seconds_since_midnight = int((datetime.now() - midnight).total_seconds())
+            max_seconds = 24 * 60 * 60  # Total seconds in a day
+            inverse_seconds = max_seconds - seconds_since_midnight
+            
+            # Format as 6-digit number with leading zeros
+            timestamp = f"{inverse_seconds:06d}"
+            filename = f"{timestamp}_consolidated_scan_report.txt"
             filepath = os.path.join(date_dir, filename)
             
             # Create the consolidated report
             with open(filepath, 'w', encoding='utf-8') as f:
                 # Write scan session header
                 f.write(f"""
-{'#'*100}
-CONSOLIDATED SCAN REPORT
-{'#'*100}
-Scan Start Time: {self.scan_start_time.strftime('%Y-%m-%d %H:%M:%S')}
-End Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-Total Markets Analyzed: {len(self.current_scan_analyses)}
+    {'#'*100}
+    CONSOLIDATED SCAN REPORT
+    {'#'*100}
+    Scan Start Time: {self.scan_start_time.strftime('%Y-%m-%d %H:%M:%S')}
+    End Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    Total Markets Analyzed: {len(self.current_scan_analyses)}
 
-""")
+    """)
                 
                 # Write all market analyses
                 for analysis in self.current_scan_analyses:
@@ -275,7 +293,7 @@ Total Markets Analyzed: {len(self.current_scan_analyses)}
         except Exception as e:
             logger.error(f"Error saving consolidated report: {str(e)}")
             return ""
-
+        
     def format_console_summary(self, execution_data: Dict) -> str:
         """Format a concise summary for console output."""
         try:

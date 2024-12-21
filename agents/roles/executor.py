@@ -86,10 +86,12 @@ class ExecutorAgent(Agent):
         if market.get('outcomeType') == 'BINARY':
             return True
             
-        # For multiple choice markets
+        # For multiple choice markets: currently not allowed
+        
         if market.get('outcomeType') == 'MULTIPLE_CHOICE':
-            answers = market.get('answers', [])
-            return len(answers) > 0
+            return False
+            #answers = market.get('answers', [])
+            #return len(answers) > 0
             
         return True  # Default to allowing trades if we don't recognize the market type
 

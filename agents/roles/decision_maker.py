@@ -43,7 +43,8 @@ class DecisionMakerAgent(Agent):
             # Analyze market using GPT
             analysis = await self.gpt_client.analyze_market(
                 research_data['market_data'],
-                research_data['summary']
+                research_data['summary'],
+                research_data['research_findings']
             )
             
             # Validate required values exist and are numeric
