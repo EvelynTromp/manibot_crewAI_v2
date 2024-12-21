@@ -2,6 +2,10 @@ import aiohttp
 import asyncio
 from typing import List, Dict
 from config.settings import settings
+import urllib.parse
+import logging
+
+logger = logging.getLogger(__name__)
 
 class SearchClient:
     def __init__(self):
@@ -11,10 +15,27 @@ class SearchClient:
         self._last_request_time = 0
         self.min_delay = 2.0  # Minimum delay between requests in seconds
     
+    def _clean_query(self, query: str) -> str:
+        """
+        Clean and prepare a query string for the search API.
+        Removes quotes and properly encodes the query.
+        """
+        # Remove any existing quotes
+        cleaned = query.replace('"', '').replace("'", '')
+        # Remove any special prefixes that might have been added
+        cleaned = cleaned.replace('QUERY:', '').strip()
+        # URL encode the cleaned query
+        return urllib.parse.quote(cleaned)
+    
     async def search(self, query: str, num_results: int = 5) -> List[Dict]:
         """
         Perform a Google Custom Search with better error handling and logging.
         """
+        # Clean and encode the query
+        cleaned_query = self._clean_query(query)
+        logger.info(f"Original query: {query}")
+        logger.info(f"Cleaned query: {cleaned_query}")
+        
         # Implement rate limiting
         current_time = asyncio.get_event_loop().time()
         time_since_last_request = current_time - self._last_request_time
@@ -26,7 +47,7 @@ class SearchClient:
         params = {
             "key": self.api_key,
             "cx": self.search_engine_id,
-            "q": query,
+            "q": cleaned_query,
             "num": min(num_results, 10)
         }
         
@@ -35,20 +56,16 @@ class SearchClient:
                 async with session.get(self.base_url, params=params) as response:
                     self._last_request_time = asyncio.get_event_loop().time()
                     
-                    # Log the response status and headers for debugging
-                    # print(f"Search response status: {response.status}")
-                    # print(f"Response headers: {response.headers}")
+                    logger.debug(f"Search request URL: {response.url}")
+                    logger.debug(f"Response status: {response.status}")
                     
                     if response.status == 429:
-                        print("Rate limit exceeded, waiting before retry")
+                        logger.warning("Rate limit exceeded, waiting before retry")
                         await asyncio.sleep(self.min_delay * 2)
                         raise Exception("Rate limit exceeded")
                         
                     response.raise_for_status()
                     data = await response.json()
-                    
-                    # Log the raw response data for debugging
-                    # print(f"Raw API response: {data}")
                     
                     results = []
                     if "items" in data:
@@ -61,14 +78,14 @@ class SearchClient:
                             results.append(result)
                         return results
                     else:
-                        # print(f"No items in response. Full response: {data}")
                         if "error" in data:
-                            raise Exception(f"API error: {data['error']}")
+                            logger.error(f"API error response: {data['error']}")
+                            raise Exception(f"API error: {data['error'].get('message', 'Unknown error')}")
+                        logger.warning(f"No search results found for query: {cleaned_query}")
                         return []
                         
         except Exception as e:
-            print(f"Detailed search error for query '{query}': {str(e)}")
-            # Re-raise the exception instead of returning empty results
+            logger.error(f"Search error for query '{cleaned_query}': {str(e)}")
             raise
     
     async def search_and_summarize(self, query: str, num_results: int = 5) -> str:
@@ -79,10 +96,9 @@ class SearchClient:
             results = await self.search(query, num_results)
             
             if not results:
-                # Check if we have a saved API key
                 if not self.api_key:
                     return "Error: No API key configured"
-                return f"No results found for query: {query} (API working but no matches)"
+                return f"No results found for query: {query}"
             
             summary = f"Search Results for: {query}\n\n"
             for i, result in enumerate(results, 1):
@@ -93,4 +109,5 @@ class SearchClient:
             return summary
             
         except Exception as e:
+            logger.error(f"Error in search_and_summarize: {str(e)}")
             return f"Search error: {str(e)}"
