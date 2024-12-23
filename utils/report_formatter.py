@@ -9,9 +9,10 @@ logger = logging.getLogger(__name__)
 
 class ReportFormatter:
     """
-    A simplified report formatter for market analysis that handles both individual 
-    and consolidated reports. This implementation focuses on reliability and 
-    debuggability over complex features.
+    A consolidated report formatter that creates a single, comprehensive report
+    for market analysis sessions. This implementation combines both individual
+    market analyses and session summaries into one file for better tracking
+    and easier review.
     """
     
     def __init__(self):
@@ -23,18 +24,36 @@ class ReportFormatter:
         # Initialize session tracking
         self.current_analyses = []
         self.session_start_time = None
+        self.report_path = None
         
     def start_new_session(self):
-        """Start a new analysis session."""
+        """
+        Start a new analysis session and create the report file.
+        The report file is created at session start and updated incrementally.
+        """
         self.current_analyses = []
         self.session_start_time = datetime.now()
-        logger.info("Started new analysis session")
+        
+        # Create the report file with initial session header
+        timestamp = self.session_start_time.strftime('%Y%m%d_%H%M%S')
+        self.report_path = self.reports_dir / f"trading_report_{timestamp}.txt"
+        
+        # Write initial session header
+        header = [
+            "TRADING SESSION REPORT",
+            f"Session Started: {self.session_start_time.strftime('%Y-%m-%d %H:%M:%S')}",
+            "=" * 80,
+            "",
+            "MARKET ANALYSES",
+            "-" * 14,
+            ""
+        ]
+        
+        self.report_path.write_text("\n".join(header))
+        logger.info(f"Started new trading session: {self.report_path}")
 
     def format_market_analysis(self, execution_data: Dict) -> str:
-        """
-        Format a single market analysis into a readable report.
-        This is the core formatting function that creates the actual report content.
-        """
+        """Format a single market analysis into a readable report section."""
         try:
             market_data = execution_data.get('market_data', {})
             analysis = execution_data.get('analysis', {})
@@ -49,23 +68,21 @@ class ReportFormatter:
             close_str = (datetime.fromtimestamp(close_time/1000).strftime('%Y-%m-%d %H:%M:%S') 
                         if close_time else 'N/A')
             
-            # Build the report content
+            # Build the analysis section
             report = [
-                "MARKET ANALYSIS REPORT",
-                f"Generated: {timestamp}",
-                "=" * 80,
+                "MARKET ANALYSIS",
+                f"Time: {timestamp}",
+                "-" * 80,
                 "",
-                "MARKET INFORMATION",
-                "-" * 17,
+                "Market Information:",
                 f"ID: {market_data.get('id', 'N/A')}",
                 f"Question: {market_data.get('question', 'N/A')}",
                 f"Created: {created_str}",
                 f"Close Time: {close_str}",
                 f"Current Probability: {market_data.get('probability', 'N/A')}",
                 "",
-                "ANALYSIS RESULTS",
-                "-" * 15,
-                f"Analysis Status: {'Successful' if execution_data.get('success') else 'Failed'}",
+                "Analysis Results:",
+                f"Status: {'Successful' if execution_data.get('success') else 'Failed'}",
                 f"Estimated Probability: {analysis.get('estimated_probability', 'N/A')}",
                 f"Confidence Level: {analysis.get('confidence_level', 'N/A')}",
                 "",
@@ -77,8 +94,7 @@ class ReportFormatter:
             # Add error information if present
             if error := execution_data.get('error'):
                 report.extend([
-                    "ERROR INFORMATION",
-                    "-" * 16,
+                    "Error Information:",
                     error,
                     ""
                 ])
@@ -86,112 +102,116 @@ class ReportFormatter:
             # Add key factors if present
             if key_factors := analysis.get('key_factors'):
                 report.extend([
-                    "KEY FACTORS",
-                    "-" * 11
+                    "Key Factors:"
                 ])
                 report.extend(f"- {factor}" for factor in key_factors)
                 report.append("")
 
+            # Add trade information if executed
+            if execution_data.get('trade_executed'):
+                trade_info = execution_data.get('trade', {})
+                report.extend([
+                    "Trade Execution:",
+                    f"Amount: {trade_info.get('amount', 'N/A')}",
+                    f"Probability: {trade_info.get('probability', 'N/A')}",
+                    f"Outcome: {trade_info.get('outcome', 'N/A')}",
+                    ""
+                ])
+
             # Add sources if present
             if sources := analysis.get('sources'):
                 report.extend([
-                    "SOURCES CONSULTED",
-                    "-" * 16
+                    "Sources Consulted:"
                 ])
                 report.extend(
                     f"- {source.get('url', 'N/A')} (Credibility: {source.get('credibility', 'N/A')})"
                     for source in sources
                 )
+                report.append("")
 
             return "\n".join(report)
 
         except Exception as e:
             logger.error(f"Error formatting market analysis: {str(e)}")
-            return f"Error generating report: {str(e)}"
+            return f"Error generating analysis section: {str(e)}"
 
-    def save_market_report(self, execution_data: Dict) -> Optional[Path]:
+    def append_market_analysis(self, execution_data: Dict) -> None:
         """
-        Save an individual market analysis report.
-        Returns the path to the saved report file, or None if saving failed.
+        Append a market analysis to the current session report.
+        Updates the report file incrementally instead of rewriting the whole file.
         """
         try:
-            # Generate report content
-            report_content = self.format_market_analysis(execution_data)
+            if not self.report_path or not self.report_path.exists():
+                logger.error("No active session report file")
+                return
             
-            # Create filename using timestamp and market ID
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            market_id = execution_data.get('market_data', {}).get('id', 'unknown')
-            filename = f"market_analysis_{timestamp}_{market_id}.txt"
+            # Format the analysis
+            analysis_content = self.format_market_analysis(execution_data)
             
-            # Save report
-            report_path = self.reports_dir / filename
-            report_path.write_text(report_content)
+            # Add separator and append to file
+            with self.report_path.open('a') as f:
+                f.write("=" * 80 + "\n")
+                f.write(analysis_content)
+                f.write("=" * 80 + "\n\n")
             
-            # Store for session tracking
+            # Store analysis metadata
             self.current_analyses.append({
-                'timestamp': timestamp,
-                'market_id': market_id,
-                'content': report_content,
-                'success': execution_data.get('success', False)
+                'timestamp': datetime.now(),
+                'market_id': execution_data.get('market_data', {}).get('id', 'unknown'),
+                'success': execution_data.get('success', False),
+                'trade_executed': execution_data.get('trade_executed', False)
             })
             
-            logger.info(f"Saved market report: {filename}")
-            return report_path
+            logger.info(f"Appended analysis for market {execution_data.get('market_data', {}).get('id', 'unknown')}")
             
         except Exception as e:
-            logger.error(f"Error saving market report: {str(e)}")
-            return None
+            logger.error(f"Error appending market analysis: {str(e)}")
 
-    def save_session_report(self) -> Optional[Path]:
+    def finalize_session(self) -> Optional[Path]:
         """
-        Save a consolidated report for the current session.
-        Returns the path to the saved report file, or None if saving failed.
+        Finalize the session report by adding summary statistics.
+        Returns the path to the complete report file.
         """
-        if not self.current_analyses:
-            logger.warning("No analyses to save in session report")
+        if not self.current_analyses or not self.report_path:
+            logger.warning("No analyses to summarize or no report file")
             return None
             
         try:
-            # Generate session summary
+            # Calculate session statistics
             successful_analyses = sum(1 for a in self.current_analyses if a['success'])
+            trades_executed = sum(1 for a in self.current_analyses if a['trade_executed'])
             session_duration = (datetime.now() - self.session_start_time).total_seconds()
             
-            # Create session report content
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            report_content = [
-                "SESSION ANALYSIS REPORT",
-                f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-                "=" * 80,
+            # Create summary content
+            summary = [
                 "",
                 "SESSION SUMMARY",
-                "-" * 14,
-                f"Total Markets Analyzed: {len(self.current_analyses)}",
-                f"Successful Analyses: {successful_analyses}",
-                f"Failed Analyses: {len(self.current_analyses) - successful_analyses}",
-                f"Session Duration: {session_duration:.1f} seconds",
+                "=" * 80,
+                f"Session End Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                f"Duration: {session_duration:.1f} seconds",
                 "",
-                "INDIVIDUAL MARKET ANALYSES",
-                "-" * 25,
-                ""
+                "Statistics:",
+                f"- Total Markets Analyzed: {len(self.current_analyses)}",
+                f"- Successful Analyses: {successful_analyses}",
+                f"- Failed Analyses: {len(self.current_analyses) - successful_analyses}",
+                f"- Trades Executed: {trades_executed}",
+                "",
+                "Success Rate:",
+                f"- Analysis Success Rate: {successful_analyses/len(self.current_analyses):.1%}",
+                f"- Trade Execution Rate: {trades_executed/len(self.current_analyses):.1%}",
+                "",
+                "=" * 80
             ]
             
-            # Add individual reports
-            for analysis in self.current_analyses:
-                report_content.append("=" * 80)
-                report_content.append(analysis['content'])
-                report_content.append("=" * 80)
-                report_content.append("")
+            # Append summary to report file
+            with self.report_path.open('a') as f:
+                f.write("\n".join(summary))
             
-            # Save consolidated report
-            filename = f"session_report_{timestamp}.txt"
-            report_path = self.reports_dir / filename
-            report_path.write_text("\n".join(report_content))
-            
-            logger.info(f"Saved session report: {filename}")
-            return report_path
+            logger.info("Finalized session report")
+            return self.report_path
             
         except Exception as e:
-            logger.error(f"Error saving session report: {str(e)}")
+            logger.error(f"Error finalizing session report: {str(e)}")
             return None
 
     def get_console_summary(self, execution_data: Dict) -> str:

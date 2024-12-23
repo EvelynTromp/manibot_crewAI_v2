@@ -3,6 +3,7 @@ from typing import Dict, List
 from core.manifold_client import ManifoldClient
 from utils.logger import get_logger
 from config.settings import settings 
+import json
 
 logger = get_logger(__name__)
 
@@ -22,7 +23,19 @@ class ExecutorAgent(Agent):
         
         self._manifold_client = None
         self._active_bets = []
-
+        self._user_info = None  # Add this to store user info
+    
+    @property
+    async def user_info(self):
+        """Lazy initialization of user information."""
+        if self._user_info is None:
+            try:
+                self._user_info = await self.manifold_client._make_request("GET", "me")
+                logger.info(f"Authenticated as Manifold user: {self._user_info.get('username')} (ID: {self._user_info.get('id')})")
+            except Exception as e:
+                logger.error(f"Failed to get user info: {str(e)}")
+                self._user_info = {}
+        return self._user_info
 
     @property
     def manifold_client(self):
@@ -42,14 +55,23 @@ class ExecutorAgent(Agent):
 
 
 
- 
+    
     async def execute_trade(self, market_id: str, decision: Dict, research_data: Dict) -> Dict:
         """Execute trade with improved validation and logging."""
         try:
             market = research_data['market_data']
             
+            # Get user info before attempting trade
+            user_info = await self.user_info
+            username = user_info.get('username', 'Unknown')
+            user_id = user_info.get('id', 'Unknown')
+            
+            # Log the execution attempt with user context
+            logger.info(f"Attempting trade as user {username} (ID: {user_id})")
+                        
             # Validate market is tradeable
             if not self._is_market_tradeable(market):
+                logger.warning(f"Market {market_id} is not tradeable")
                 return {
                     "success": False,
                     "error": "Market is not currently tradeable",
@@ -59,6 +81,7 @@ class ExecutorAgent(Agent):
             # Get bet parameters
             bet_recommendation = decision.get('bet_recommendation')
             if not bet_recommendation:
+                logger.warning("No bet recommendation provided")
                 return {
                     "success": False,
                     "error": "No bet recommendation provided",
@@ -80,11 +103,23 @@ class ExecutorAgent(Agent):
                 outcome=outcome
             )
             
+            # Validate bet result
+            if not bet_result.get('id'):
+                logger.error("Bet placement failed - no bet ID received")
+                return {
+                    "success": False,
+                    "error": "Bet placement failed",
+                    "details": "No bet confirmation received"
+                }
+                
+            # Log successful trade with details
+            logger.info(f"Successfully executed trade: Bet ID {bet_result['id']}")
+            logger.info(f"Trade details: {json.dumps(bet_result, indent=2)}")
+            
             # Record the trade
             trade_record = self._record_trade(market_id, decision, bet_result)
             self._active_bets.append(trade_record)
             
-            logger.info(f"Successfully executed trade for market {market_id}")
             return {
                 "success": True,
                 "trade": trade_record,
@@ -98,6 +133,7 @@ class ExecutorAgent(Agent):
                 "error": str(e),
                 "details": "Trade execution failed"
             }
+
 
     def _is_market_tradeable(self, market: Dict) -> bool:
         """Check if market is currently tradeable."""

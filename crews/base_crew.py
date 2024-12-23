@@ -8,7 +8,7 @@ import asyncio
 logger = get_logger(__name__)
 
 class BaseCrew(Crew):
-    """Enhanced base crew with improved logging and error handling."""
+    """Enhanced base crew with consolidated reporting and error handling."""
     
     def __init__(self, agents: List, tasks: List, verbose: bool = True):
         super().__init__(
@@ -24,11 +24,11 @@ class BaseCrew(Crew):
         """Initialize a new market scanning session."""
         self._scan_start_time = datetime.now()
         self._execution_history = []
-        self._report_formatter.start_new_session()  # Updated method name
+        self._report_formatter.start_new_session()
         logger.info("Started new market scanning session")
     
     def log_execution(self, execution_data: Dict) -> None:
-        """Log execution details with enhanced error tracking."""
+        """Log execution details with consolidated reporting."""
         try:
             # Add metadata
             execution_data['timestamp'] = datetime.now().isoformat()
@@ -39,14 +39,12 @@ class BaseCrew(Crew):
             # Store execution in history
             self._execution_history.append(execution_data)
             
-            # Save the report and get console summary
-            report_path = self._report_formatter.save_market_report(execution_data)  # Updated method name
-            console_summary = self._report_formatter.get_console_summary(execution_data)
+            # Append to the consolidated report
+            self._report_formatter.append_market_analysis(execution_data)
             
-            # Log information
+            # Get and display console summary
+            console_summary = self._report_formatter.get_console_summary(execution_data)
             print(console_summary)
-            if report_path:
-                logger.info(f"Report saved to: {report_path}")
             
         except Exception as e:
             logger.error(f"Error in log_execution: {str(e)}")
@@ -62,11 +60,14 @@ class BaseCrew(Crew):
             
         successful = sum(1 for e in self._execution_history 
                         if e.get('success', False))
+        trades_executed = sum(1 for e in self._execution_history 
+                            if e.get('trade_executed', False))
         
         return {
             "total_executions": len(self._execution_history),
             "successful_executions": successful,
             "failed_executions": len(self._execution_history) - successful,
+            "trades_executed": trades_executed,
             "latest_execution": self._execution_history[-1] if self._execution_history else None,
             "scan_start_time": self._scan_start_time.isoformat() if self._scan_start_time else None,
             "scan_end_time": datetime.now().isoformat(),
@@ -75,9 +76,10 @@ class BaseCrew(Crew):
         }
 
     def finalize_scan_session(self) -> Optional[str]:
-        """Finalize scanning session with enhanced reporting."""
+        """Finalize scanning session with consolidated reporting."""
         try:
-            report_path = self._report_formatter.save_session_report()  # Updated method name
+            # Finalize the report and get the report path
+            report_path = self._report_formatter.finalize_session()
             
             if report_path:
                 logger.info(f"Session report saved to: {report_path}")
@@ -89,6 +91,7 @@ class BaseCrew(Crew):
                 print(f"Total Markets Analyzed: {summary['total_executions']}")
                 print(f"Successful Executions: {summary['successful_executions']}")
                 print(f"Failed Executions: {summary['failed_executions']}")
+                print(f"Trades Executed: {summary['trades_executed']}")
                 if summary.get('scan_duration'):
                     print(f"Total Scan Duration: {summary['scan_duration']:.1f}s")
                 print(f"Full report saved to: {report_path}")

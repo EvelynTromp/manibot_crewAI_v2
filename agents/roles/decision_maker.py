@@ -107,7 +107,7 @@ class DecisionMakerAgent(Agent):
         
         # Calculate base bet size based on edge and confidence
         base_bet = settings.MIN_BET_AMOUNT + (
-            (settings.MAX_BET_AMOUNT - settings.MIN_BET_AMOUNT) * 
+            (min(settings.MAX_BET_AMOUNT, balance * 0.1) - settings.MIN_BET_AMOUNT) * 
             edge * confidence
         )
         
@@ -183,24 +183,24 @@ class DecisionMakerAgent(Agent):
             bet_details
         )
 
-  
-    def _validate_bet_constraints(self, bet_details: Dict) -> bool:
-        """Validate that bet meets basic constraints."""
-        if not bet_details:
-            return False
+    async def validate_bet_parameters(self, amount: float) -> bool:
+        """Validate bet parameters against user's balance and market state."""
+        try:
+            # Get user balance
+            me_data = await self._make_request("GET", "me")
+            balance = float(me_data.get('balance', 0))
             
-        amount = bet_details.get('amount', 0)
-        probability = bet_details.get('probability', 0)
-        
-        # Check amount constraints
-        if not (settings.MIN_BET_AMOUNT <= amount <= settings.MAX_BET_AMOUNT):
-            return False
+            logger.info(f"Current balance: M${balance}")
             
-        # Check probability constraints
-        if not (settings.MIN_PROBABILITY <= probability <= settings.MAX_PROBABILITY):
-            return False
+            if amount > balance:
+                logger.error(f"Insufficient balance. Required: M${amount}, Available: M${balance}")
+                return False
+                
+            return True
             
-        return True
+        except Exception as e:
+            logger.error(f"Error validating bet parameters: {str(e)}")
+            return False
 
     def get_decision_explanation(self, analysis: Dict) -> str:
         """Generate a human-readable explanation of the decision."""

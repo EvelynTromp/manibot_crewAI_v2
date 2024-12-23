@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     """
     
     # API Keys - Essential for core functionality
-    MANIFOLD_API_KEY: str = "6a40ae0d-1de0-4217-acb8-124728eebcfc"
+    MANIFOLD_API_KEY: str = "2ad841d8-edd6-4d8d-a08f-0e4e7f2c027d"
     OPENAI_API_KEY: str = "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"
     GOOGLE_API_KEY: str = "AIzaSyD23WN0eOG_Fpt_ZrfWwzQFYGcGaNsixNE"
     
@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # Market Analysis Configuration
     MIN_PROBABILITY: float = 0.1
     MAX_PROBABILITY: float = 0.9
-    MIN_BET_AMOUNT: float = 10.0
+    MIN_BET_AMOUNT: float = 1.0
     MAX_BET_AMOUNT: float = 100.0
     MIN_EDGE_REQUIREMENT: float = 0.02
     
