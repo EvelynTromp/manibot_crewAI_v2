@@ -2,6 +2,7 @@ from crewai import Agent
 from typing import Dict, List
 from core.manifold_client import ManifoldClient
 from utils.logger import get_logger
+from config.settings import settings 
 
 logger = get_logger(__name__)
 
@@ -9,28 +10,28 @@ class ExecutorAgent(Agent):
     """Agent responsible for executing trades and managing positions."""
 
     def __init__(self):
-        # Initialize base Agent first
         super().__init__(
             role='Market Executor',
-            goal='Execute trading decisions safely and efficiently',
-            backstory="""You are a precise and methodical market executor 
-            responsible for implementing trading decisions. Your focus is on 
-            executing trades accurately while managing risk and maintaining 
-            detailed records.""",
+            goal='Execute trading decisions efficiently and reliably',
+            backstory="""You are a precise market executor responsible for 
+            implementing trading decisions. Your focus is on executing trades 
+            accurately while maintaining detailed records.""",
             verbose=True,
             allow_delegation=False
         )
         
-        # Initialize instance variables without direct assignment
         self._manifold_client = None
         self._active_bets = []
+
 
     @property
     def manifold_client(self):
         """Lazy initialization of manifold client."""
         if self._manifold_client is None:
-            self._manifold_client = ManifoldClient()
+            self._manifold_client = ManifoldClient(api_key=settings.MANIFOLD_API_KEY)
         return self._manifold_client
+    
+    
 
     @property
     def active_bets(self):
@@ -41,22 +42,37 @@ class ExecutorAgent(Agent):
 
 
 
+ 
     async def execute_trade(self, market_id: str, decision: Dict, research_data: Dict) -> Dict:
+        """Execute trade with improved validation and logging."""
         try:
             market = research_data['market_data']
-            amount = decision['bet_recommendation']['amount']
-            probability = decision['bet_recommendation']['probability']
             
-            # Add validation
-            if market['outcomeType'] != 'BINARY':
-                return {"success": False, "error": "Only binary markets supported currently"}
-                
-            if market['isResolved'] or market.get('isClosed'):
-                return {"success": False, "error": "Market is closed or resolved"}
+            # Validate market is tradeable
+            if not self._is_market_tradeable(market):
+                return {
+                    "success": False,
+                    "error": "Market is not currently tradeable",
+                    "details": "Market validation failed"
+                }
             
+            # Get bet parameters
+            bet_recommendation = decision.get('bet_recommendation')
+            if not bet_recommendation:
+                return {
+                    "success": False,
+                    "error": "No bet recommendation provided",
+                    "details": "Missing bet parameters"
+                }
+            
+            amount = bet_recommendation['amount']
+            probability = bet_recommendation['probability']
+            
+            # Determine bet direction
             outcome = "YES" if probability > 0.5 else "NO"
-            print(f"Attempting binary bet: {amount}M @ {probability} on {outcome}")
+            logger.info(f"Attempting bet: {amount}M @ {probability} on {outcome}")
             
+            # Execute the trade
             bet_result = await self.manifold_client.place_bet(
                 market_id=market_id,
                 amount=amount,
@@ -68,13 +84,20 @@ class ExecutorAgent(Agent):
             trade_record = self._record_trade(market_id, decision, bet_result)
             self._active_bets.append(trade_record)
             
-            return {"success": True, "trade": trade_record}
+            logger.info(f"Successfully executed trade for market {market_id}")
+            return {
+                "success": True,
+                "trade": trade_record,
+                "bet_details": bet_result
+            }
                 
         except Exception as e:
-            if "400" in str(e):
-                print(f"Bad request error details: {str(e)}")
-            raise
-
+            logger.error(f"Error executing trade: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "details": "Trade execution failed"
+            }
 
     def _is_market_tradeable(self, market: Dict) -> bool:
         """Check if market is currently tradeable."""

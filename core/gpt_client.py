@@ -1,227 +1,360 @@
+import json
 from openai import AsyncOpenAI
-from typing import Dict, List
+from typing import Dict, List, Optional
 from config.settings import settings
 from utils.logger import get_logger
+import re
+from pydantic import BaseModel, ConfigDict
 
-# Initialize module-level logger
 logger = get_logger(__name__)
 
-class GPTClient:
-    def __init__(self):
-        # Initialize the OpenAI client with our API key
+class GPTClient(BaseModel):
+    """Enhanced GPT client utilizing native search capabilities."""
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    
+    client: AsyncOpenAI = None
+    model: str = "gpt-4-turbo-preview"
+    max_retries: int = settings.MAX_RETRIES
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Initialize OpenAI client after parent initialization
         self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-        self.model = "gpt-4-turbo-preview"
-        logger.info("GPTClient initialized successfully")
+        self._retry_count = 0  # Private attributes don't need to be in model fields
 
-    async def analyze_market(self, market_data: Dict, research_data: str, research_findings: List[Dict]) -> Dict:
-        """
-        Analyze market data and research to determine trading opportunities.
-        Uses GPT-4 to evaluate probabilities and identify key factors.
-        """
+
+
+    
+    async def analyze_market(self, market_data: Dict) -> Dict:
+        """Comprehensive market analysis with enhanced error handling."""
         try:
-            # Compile research details for a comprehensive analysis
-            research_details = "\n\nDetailed Research Findings:\n"
-            for finding in research_findings:
-                research_details += f"\nQuery: {finding['query']}\n"
-                research_details += f"Results: {finding['results']}\n"
+            # Create analysis prompt
+            prompt = self._create_market_analysis_prompt(market_data)
             
-            prompt = f"""
-            You are an experienced prediction market trader with a track record of identifying profitable opportunities.
-            Your goal is to find trading edges while managing risk appropriately.
-            
-            Analyze this prediction market and research data to determine:
-            1. The probability of each possible outcome
-            2. Whether there are any trading edges (differences between your probability estimate and market prices)
-            3. Key factors influencing the outcome
-            4. Your confidence level in the analysis
-            
-            Market Information:
-            {market_data}
-
-            Research Data:
-            {research_data}
-
-            {research_details}
-
-            Important Trading Guidelines:
-            - Look for small but reliable edges (3-5% differences from market price can be significant)
-            - Consider market microstructure (liquidity, number of traders, recent volume)
-            - Low research coverage can create opportunities due to market inefficiencies
-            - Lack of immediate news doesn't mean no trade - structural factors matter
-            - Balance between being opportunistic and managing risk
-            
-            Provide your detailed analysis first, then end with a structured summary in exactly this format:
-
-            STRUCTURED SUMMARY:
-            Probability: [Your probability estimate as a percentage, e.g. 45%]
-            Confidence: [Your confidence level as a percentage]
-            Key Factors:
-            - [First key factor]
-            - [Second key factor]
-            - [Third key factor]
-            """
-
+            # Get GPT completion
             completion = await self.client.chat.completions.create(
                 messages=[
-                    {"role": "system", "content": "You are an active prediction market trader who always provides structured analysis summaries."},
+                    {"role": "system", "content": """You are a prediction market expert.
+                    Return analysis as JSON with probability estimates and specific bet recommendations.
+                    Consider market dynamics and provide concrete trading advice."""},
                     {"role": "user", "content": prompt}
                 ],
                 model=self.model,
                 temperature=0.7,
                 max_tokens=settings.MAX_TOKENS
             )
-
-            return self._parse_analysis(completion.choices[0].message.content)
-
+            
+            # Extract and parse response
+            response = completion.choices[0].message.content
+            logger.debug(f"Raw GPT response: {response}")
+            
+            try:
+                # Clean response to ensure valid JSON
+                cleaned_response = self._clean_json_response(response)
+                analysis = json.loads(cleaned_response)
+                logger.debug(f"Parsed analysis: {analysis}")
+                
+                # Validate and enhance analysis
+                validated_analysis = self._validate_analysis(analysis)
+                
+                # Mark analysis as successful if we have valid probability estimates
+                validated_analysis['success'] = (
+                    validated_analysis.get('estimated_probability') is not None and
+                    validated_analysis.get('confidence_level') is not None
+                )
+                
+                if validated_analysis['success']:
+                    validated_analysis['bet_recommendation'] = self._generate_bet_recommendation(
+                        validated_analysis['estimated_probability'],
+                        validated_analysis['confidence_level'],
+                        market_data
+                    )
+                    
+                return validated_analysis
+                
+            except json.JSONDecodeError as e:
+                error_msg = f"Failed to parse GPT response: {str(e)}"
+                logger.error(f"JSON parsing error: {error_msg}")
+                return self._create_default_analysis(error=error_msg)
+                
         except Exception as e:
-            logger.error(f"Error in analyze_market: {str(e)}")
+            error_msg = str(e)
+            logger.error(f"Error in analyze_market: {error_msg}")
+            return self._create_default_analysis(error=error_msg)
+        
+        
+    def _clean_json_response(self, response: str) -> str:
+        """Clean GPT response to ensure valid JSON."""
+        # Find JSON content between curly braces
+        match = re.search(r'\{.*\}', response, re.DOTALL)
+        if match:
+            json_str = match.group()
+            # Remove any markdown code block markers
+            json_str = re.sub(r'```json\s*|\s*```', '', json_str)
+            return json_str
+        raise ValueError("No valid JSON object found in response")
+
+    def _create_default_analysis(self, error: str = None) -> Dict:
+        """Create a safe default analysis structure with error information."""
+        return {
+            'estimated_probability': None,
+            'confidence_level': None,
+            'research_findings': [],
+            'key_factors': [],
+            'reasoning': error if error else "Analysis failed to complete",
+            'sources': [],
+            'error': error if error else "Unknown error in analysis",
+            'success': False
+        }
+    
+
+
+    async def get_market_news(self, query: str) -> Dict:
+        """Focused search for recent news about a market topic."""
+        prompt = f"""Search for recent news about: {query}
+        Focus on articles from the past week that could affect this market.
+        Include source URLs and publication dates."""
+        
+        try:
+            completion = await self.client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": "You are a research assistant focused on finding recent, relevant news."},
+                    {"role": "user", "content": prompt}
+                ],
+                model=self.model
+            )
+            
+            return self._parse_news_response(completion.choices[0].message.content)
+            
+        except Exception as e:
+            logger.error(f"Error getting market news: {str(e)}")
             raise
 
-    async def generate_search_queries(self, market_data: Dict) -> List[str]:
-        """
-        Generate relevant search queries for market research.
-        Returns clean, targeted queries ready for search engine use.
-        """
+    async def validate_sources(self, sources: List[str]) -> Dict:
+        """Validate and rate the credibility of sources."""
+        prompt = f"""Evaluate the credibility of these sources:
+        {sources}
+        
+        For each source, provide:
+        1. Credibility rating (1-5)
+        2. Known biases or limitations
+        3. Recommendation for use in analysis"""
+        
         try:
-            prompt = f"""
-            You are an expert researcher helping to analyze a prediction market.
-            Based on the market question and context, generate 2-3 specific,
-            targeted search queries that would help evaluate the probability.
-
-            Market Question: {market_data.get('question', '')}
-            Description: {market_data.get('textDescription', '')}
-            Current Probability: {market_data.get('probability', 0)}
-            Close Time: {market_data.get('closeTime', 'Unknown')}
-
-            Generate queries that:
-            - Are specific and targeted rather than broad
-            - Focus on quantitative data when relevant
-            - Include temporal context when timing matters
-            - Look for expert analysis in the relevant domain
-
-            Just write each query on a new line, with no prefixes or formatting.
-            Each query should be direct and clean, ready to be used in a search engine.
-            """
-
             completion = await self.client.chat.completions.create(
                 messages=[
-                    {"role": "system", "content": "You are an expert researcher who generates precise, targeted search queries."},
+                    {"role": "system", "content": "You are an expert at evaluating source credibility and bias."},
                     {"role": "user", "content": prompt}
                 ],
-                model=self.model,
-                temperature=0.7
+                model=self.model
             )
-
-            # Process and clean the queries
-            queries = []
-            for line in completion.choices[0].message.content.split('\n'):
-                cleaned_query = line.strip()
-                if cleaned_query and len(cleaned_query) > 5:
-                    # Remove any quotes or special characters
-                    cleaned_query = cleaned_query.replace('"', '').replace("'", '')
-                    queries.append(cleaned_query)
-
-            logger.info(f"Generated {len(queries)} search queries")
-            for query in queries:
-                logger.info(f"Generated query: {query}")
-
-            return queries[:3]  # Return top 3 queries
-
+            
+            return self._parse_validation_response(completion.choices[0].message.content)
+            
         except Exception as e:
-            logger.error(f"Error generating search queries: {str(e)}")
-            # Return a basic query based on the market question as fallback
-            return [market_data.get('question', '')]
+            logger.error(f"Error validating sources: {str(e)}")
+            raise
 
-    async def validate_decision(self, market_data: Dict, analysis: Dict, proposed_bet: Dict) -> bool:
-        """
-        Validate a proposed trading decision using GPT-4 as a risk management check.
-        Returns True if the trade passes validation checks.
+    
+    def _parse_analysis_response(self, response: str) -> Dict:
+        """Parse the GPT analysis response into a structured format.
+        
+        Args:
+            response: Raw response string from GPT
+            
+        Returns:
+            Dictionary containing parsed analysis fields
         """
         try:
-            prompt = f"""
-            You are a risk management expert. Validate this proposed prediction market bet:
-
-            Market: {market_data}
-            Analysis: {analysis}
-            Proposed Bet: {proposed_bet}
-
-            Consider:
-            1. Is the bet size appropriate given the uncertainty?
-            2. Are there any red flags in the analysis?
-            3. Is the probability estimate well-justified?
-
-            After explaining your reasoning in depth, end with either "YES WE SHOULD TRADE" or "NO WE SHOULD NOT TRADE"
-            """
-
-            completion = await self.client.chat.completions.create(
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
-                model=self.model,
-                temperature=0.3  # Lower temperature for more conservative validation
-            )
-
-            return "YES WE SHOULD TRADE" in completion.choices[0].message.content
-
-        except Exception as e:
-            logger.error(f"Error in validate_decision: {str(e)}")
-            return False
-
-    def _parse_analysis(self, analysis: str) -> Dict:
-        """
-        Parse GPT's analysis into structured data.
-        Returns a dictionary containing probability estimates and key factors.
-        """
-        try:
-            # Initialize result structure
-            result = {
-                "estimated_probability": None,
-                "confidence_level": None,
-                "key_factors": [],
-                "reasoning": analysis
+            # Initialize default structure
+            analysis = {
+                'estimated_probability': None,
+                'confidence_level': None,
+                'research_findings': [],
+                'sources': [],
+                'key_factors': []
             }
             
-            # Look for the structured summary section
-            if "STRUCTURED SUMMARY:" in analysis:
-                summary_section = analysis.split("STRUCTURED SUMMARY:")[1].strip()
-                
-                # Extract probability
-                if "Probability:" in summary_section:
-                    prob_text = summary_section.split("Probability:")[1].split('\n')[0]
-                    # Convert percentage to decimal (e.g., "45%" -> 0.45)
-                    prob_value = float(prob_text.strip().replace('%', '')) / 100
-                    result["estimated_probability"] = prob_value
-                
-                # Extract confidence
-                if "Confidence:" in summary_section:
-                    conf_text = summary_section.split("Confidence:")[1].split('\n')[0]
-                    # Convert percentage to decimal
-                    conf_value = float(conf_text.strip().replace('%', '')) / 100
-                    result["confidence_level"] = conf_value
-                
-                # Extract key factors
-                if "Key Factors:" in summary_section:
-                    factors_section = summary_section.split("Key Factors:")[1].strip()
-                    # Get all lines starting with a dash
-                    factors = [
-                        line.strip('- ').strip()  # Remove dash and whitespace
-                        for line in factors_section.split('\n')
-                        if line.strip().startswith('-')
-                    ]
-                    result["key_factors"] = factors
+            # Split response into sections
+            sections = response.split('\n\n')
             
-                logger.info(f"Parsed analysis: prob={result['estimated_probability']}, "
-                           f"conf={result['confidence_level']}, "
-                           f"factors={len(result['key_factors'])}")
+            for section in sections:
+                if 'SEARCH FINDINGS:' in section:
+                    # Extract research findings
+                    findings = section.split('SEARCH FINDINGS:')[1].strip().split('\n')
+                    analysis['research_findings'] = [f.strip('- ') for f in findings if f.strip()]
+                    
+                elif 'FINAL ESTIMATES:' in section:
+                    # Parse probability estimates
+                    for line in section.split('\n'):
+                        if 'Estimated Probability:' in line:
+                            prob = float(line.split(':')[1].strip().strip('[]%'))/100
+                            analysis['estimated_probability'] = prob
+                        elif 'Confidence Level:' in line:
+                            conf = float(line.split(':')[1].strip().strip('[]%'))/100
+                            analysis['confidence_level'] = conf
+                            
+                elif 'KEY FACTORS:' in section:
+                    # Extract key factors
+                    factors = section.split('KEY FACTORS:')[1].strip().split('\n')
+                    analysis['key_factors'] = [f.strip('123. ') for f in factors if f.strip()]
+                    
+                elif 'SOURCES:' in section:
+                    # Extract sources
+                    sources = section.split('SOURCES:')[1].strip().split('\n')
+                    analysis['sources'] = [{'url': s.strip('- '), 'credibility': 0.8} 
+                                        for s in sources if s.strip()]
+            
+            return analysis
+        
+        except Exception as e:
+            logger.error(f"Error parsing analysis response: {str(e)}")
+            raise ValueError(f"Failed to parse GPT response: {str(e)}")
+
+    def _parse_validation_response(self, response: str) -> Dict:
+        """Parse the source validation response into a structured format.
+        
+        Args:
+            response: Raw response string from GPT
+            
+        Returns:
+            Dictionary containing validation results
+        """
+        try:
+            # Initialize validation results
+            validation = {
+                'validated_sources': []
+            }
+            
+            # Split response by source
+            source_sections = response.split('\n\n')
+            
+            for section in source_sections:
+                if not section.strip():
+                    continue
+                    
+                source_data = {
+                    'credibility': None,
+                    'recommendation': None
+                }
                 
-            return result
+                # Parse rating and recommendation
+                for line in section.split('\n'):
+                    if 'Credibility rating' in line.lower():
+                        try:
+                            rating = float(line.split(':')[1].strip().split('/')[0])
+                            source_data['credibility'] = rating / 5.0  # Normalize to 0-1
+                        except:
+                            continue
+                            
+                    if 'Recommendation' in line:
+                        source_data['recommendation'] = line.split(':')[1].strip()
+                
+                if source_data['credibility'] is not None:
+                    validation['validated_sources'].append(source_data)
+            
+            return validation
             
         except Exception as e:
-            logger.error(f"Error parsing analysis: {str(e)}")
-            # Return safe defaults if parsing fails
+            logger.error(f"Error parsing validation response: {str(e)}")
+            raise ValueError(f"Failed to parse validation response: {str(e)}")
+
+
+    def _validate_analysis(self, analysis: Dict) -> Dict:
+        """Validate and clean analysis output with enhanced betting logic."""
+        # Ensure all required fields exist
+        required_fields = {
+            'estimated_probability': float,
+            'confidence_level': float,
+            'research_findings': list,
+            'key_factors': list,
+            'reasoning': str,
+            'sources': list
+        }
+        
+        for field, field_type in required_fields.items():
+            if field not in analysis or not isinstance(analysis[field], field_type):
+                logger.warning(f"Missing or invalid field: {field}")
+                analysis[field] = field_type()
+        
+        # Ensure probabilities are between 0 and 1
+        analysis['estimated_probability'] = max(0, min(1, float(analysis.get('estimated_probability', 0))))
+        analysis['confidence_level'] = max(0, min(1, float(analysis.get('confidence_level', 0))))
+        
+        return analysis
+
+
+    def _create_default_analysis(self) -> Dict:
+        """Create a safe default analysis structure."""
+        return {
+            'estimated_probability': None,
+            'confidence_level': None,
+            'research_findings': [],
+            'key_factors': [],
+            'reasoning': "Analysis failed to complete",
+            'sources': []
+        }
+    
+
+    
+    def _generate_bet_recommendation(self, 
+                                   estimated_prob: float, 
+                                   confidence: float,
+                                   market_data: Dict) -> Dict:
+        """Generate betting recommendation based on analysis."""
+        market_prob = float(market_data.get('probability', 0))
+        edge = abs(estimated_prob - market_prob)
+        
+        # More aggressive edge requirement
+        min_edge = 0.01  # Reduced from 0.02
+        
+        if edge >= min_edge and confidence >= 0.6:  # Reduced confidence threshold
+            # Calculate bet size based on edge and confidence
+            base_amount = settings.MIN_BET_AMOUNT
+            scaling_factor = min(edge * confidence * 10, 1.0)  # More aggressive scaling
+            bet_amount = base_amount + (
+                (settings.MAX_BET_AMOUNT - base_amount) * scaling_factor
+            )
+            
             return {
-                "estimated_probability": None,
-                "key_factors": ["Error parsing analysis"],
-                "confidence_level": None,
-                "reasoning": str(e)
+                'amount': round(bet_amount, 2),
+                'probability': estimated_prob,
+                'edge': edge,
+                'confidence': confidence
             }
+        return None
+
+
+
+    
+    def _create_market_analysis_prompt(self, market_data: Dict) -> str:
+        """Enhanced prompt for market analysis with explicit trading guidance."""
+        return f"""Analyze this prediction market for trading opportunities:
+
+        MARKET DETAILS
+        Question: {market_data.get('question')}
+        Current Probability: {market_data.get('probability')}
+        Close Time: {market_data.get('closeTime')}
+        Description: {market_data.get('textDescription', '')}
+
+        Provide analysis in this EXACT JSON format:
+        {{
+            "estimated_probability": <float between 0-1>,
+            "confidence_level": <float between 0-1>,
+            "research_findings": [<list of key findings>],
+            "key_factors": [<list of decision factors>],
+            "reasoning": "<detailed explanation of probability estimate>",
+            "sources": [
+                {{
+                    "url": "<source url>",
+                    "credibility": <float between 0-1>,
+                    "type": "<NEWS|ACADEMIC|SOCIAL|BLOG|OFFICIAL>"
+                }}
+            ]
+        }}
+
+        IMPORTANT: 
+        - Be decisive in probability estimates
+        - Consider recent news and developments
+        - Focus on actionable insights
+        - Return ONLY the JSON object"""

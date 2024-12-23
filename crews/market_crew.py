@@ -1,183 +1,195 @@
+# crews/market_crew.py
+
+from typing import Dict, List, Optional
+from core.gpt_client import GPTClient
+from utils.logger import get_logger
+from config.settings import settings
 from crews.base_crew import BaseCrew
-from agents.roles.researcher import ResearcherAgent
 from agents.roles.decision_maker import DecisionMakerAgent
 from agents.roles.executor import ExecutorAgent
-from tasks.task_definitions import (
-    ResearchMarketTask,
-    AnalyzeOpportunityTask,
-    ExecuteTradeTask
-)
-from typing import Dict, List, Optional
-from utils.logger import get_logger
+from crewai import Agent  # Add this line
+from pydantic import Field
+from crewai import Crew
+from typing import Optional
+import backoff 
+import asyncio
+from datetime import datetime
+
+
 
 logger = get_logger(__name__)
 
+
 class MarketCrew(BaseCrew):
-    """Crew for coordinating market research, analysis, and trading with enhanced reporting."""
+    """Enhanced crew for market analysis with improved execution handling."""
+    
+    gpt_client: Optional[GPTClient] = Field(default=None)
     
     def __init__(self):
-        # Create our specialized agents
-        researcher = ResearcherAgent()
         decision_maker = DecisionMakerAgent()
         executor = ExecutorAgent()
         
-        # Initialize with our agents and empty tasks list
         super().__init__(
-            agents=[researcher, decision_maker, executor],
+            agents=[decision_maker, executor],
             tasks=[],
             verbose=True
         )
         
-        logger.info("Market crew initialized with enhanced reporting capabilities")
+        self.gpt_client = GPTClient()
+        logger.info("Market crew initialized with enhanced execution capabilities")
+    
+    def backoff_handler(details):
+        """Handler for backoff events."""
+        logger.warning(f"Backing off {details['wait']:0.1f} seconds after {details['tries']} tries")
 
-    async def scan_markets(self, limit: int = 1) -> List[Dict]: #  limit here sets how many markets will be analyzed during a single scan
-        """Scan for trading opportunities across multiple markets with comprehensive reporting."""
+    @backoff.on_exception(
+        backoff.expo,
+        (asyncio.TimeoutError, Exception),
+        max_tries=3,
+        on_backoff=backoff_handler
+    )
+    async def scan_markets(self, limit: int = 1) -> List[Dict]:
+        """Scan markets with improved async handling and backoff."""
         try:
-            # Start new scan session
             self.start_scan_session()
-            logger.info(f"Starting market scan. Will analyze up to {limit} markets")
+            logger.info(f"Starting market scan for {limit} markets")
             
-            researcher = next((a for a in self.agents if a.role == 'Market Researcher'), None)
-            if not researcher:
-                raise ValueError("Could not find researcher agent")
+            executor = self._get_agent_by_role('Market Executor')
+            if not executor:
+                raise ValueError("Could not find executor agent")
             
-            # Get markets to analyze
-            active_markets = await researcher.get_active_markets(limit)
-            logger.info(f"Found {len(active_markets)} markets to analyze")
+            # Get markets with timeout
+            active_markets = await asyncio.wait_for(
+                executor.manifold_client.get_markets(limit),
+                timeout=settings.SEARCH_TIMEOUT
+            )
+            
+            logger.info(f"Found {len(active_markets)} active markets to analyze")
             
             results = []
+            executed_trades = 0
+            
             for i, market in enumerate(active_markets, 1):
-                logger.info(f"Analyzing market {i} of {len(active_markets)}")
-                result = await self.analyze_and_trade(market['id'])
-                results.append(result)
+                try:
+                    result = await self.analyze_and_trade(market['id'])
+                    results.append(result)
+                    
+                    if result.get('trade_executed'):
+                        executed_trades += 1
+                        logger.info(f"Successfully executed trade for market {market['id']}")
+                    
+                    # Add progressive delay between markets
+                    if i < len(active_markets):
+                        delay = settings.RATE_LIMIT_DELAY * (1 + (i * 0.1))
+                        await asyncio.sleep(delay)
+                        
+                except Exception as e:
+                    logger.error(f"Error processing market {market['id']}: {str(e)}")
+                    results.append({
+                        "market_id": market['id'],
+                        "success": False,
+                        "error": str(e)
+                    })
             
-            # Finalize scan session and save consolidated report
-            report_path = self.finalize_scan_session()
-            logger.info(f"Scan complete. Full report saved to: {report_path}")
-            
+            logger.info(f"Scan complete. Executed {executed_trades} trades out of {len(active_markets)} markets")
             return results
             
         except Exception as e:
-            logger.error(f"Error scanning markets: {str(e)}")
-            return []
+            logger.error(f"Error in market scan: {str(e)}")
+            return []    
 
     async def analyze_and_trade(self, market_id: str) -> Dict:
-        """Coordinate the full analysis and trading process with comprehensive reporting."""
+        """Analyze market and execute trade with comprehensive error handling and logging."""
+        execution_data = {
+            "market_id": market_id,
+            "success": False,
+            "trade_executed": False,
+            "error": None,
+            "start_time": datetime.now().isoformat()
+        }
+        
         try:
-            # Get our specialized agents
-            researcher = next((a for a in self.agents if a.role == 'Market Researcher'), None)
-            decision_maker = next((a for a in self.agents if a.role == 'Market Decision Maker'), None)
-            executor = next((a for a in self.agents if a.role == 'Market Executor'), None)
+            # Get required agents with validation
+            executor = self._get_agent_by_role('Market Executor')
+            if not executor:
+                raise ValueError("Required executor agent not found")
             
-            if not all([researcher, decision_maker, executor]):
-                raise ValueError("Could not find all required agents")
-            
-            # Gather research data with enhanced error handling
+            # Fetch market data with timeout and retry
             try:
-                research_data = await researcher.research_market(market_id)
-                logger.info(f"Research completed for market {market_id}")
+                market_data = await asyncio.wait_for(
+                    executor.manifold_client.get_market(market_id),
+                    timeout=settings.SEARCH_TIMEOUT
+                )
+                execution_data["market_data"] = market_data
+                logger.info(f"Retrieved market data for {market_id}")
+            except asyncio.TimeoutError:
+                raise TimeoutError(f"Timeout fetching market data for {market_id}")
             except Exception as e:
-                logger.error(f"Research failed for market {market_id}: {str(e)}")
-                return {
-                    "success": False,
-                    "error": f"Research failed: {str(e)}",
-                    "market_id": market_id
-                }
+                raise RuntimeError(f"Error fetching market data: {str(e)}")
             
-            # Analyze opportunity with enhanced tracking
+            # Perform market analysis with detailed error tracking
             try:
-                analysis = await decision_maker.analyze_opportunity(research_data)
-                logger.info(f"Analysis completed for market {market_id}")
+                analysis = await self.gpt_client.analyze_market(market_data)
+                execution_data["analysis"] = analysis
+                
+                if analysis.get('error'):
+                    logger.warning(f"Analysis completed with error: {analysis['error']}")
+                    execution_data["error"] = analysis['error']
+                elif not analysis.get('success', False):
+                    logger.warning("Analysis completed but marked as unsuccessful")
+                    execution_data["error"] = "Analysis failed to produce valid results"
+                else:
+                    logger.info(f"Successfully analyzed market {market_id}")
+                    execution_data["success"] = True
             except Exception as e:
-                logger.error(f"Analysis failed for market {market_id}: {str(e)}")
-                return {
-                    "success": False,
-                    "error": f"Analysis failed: {str(e)}",
-                    "market_id": market_id,
-                    "research_data": research_data
-                }
+                raise RuntimeError(f"Error in market analysis: {str(e)}")
             
-            # Prepare the execution result
-            result = {
-                "market_id": market_id,
-                "success": True
-            }
-            
-            # Execute trade if recommended
-            if analysis.get('bet_recommendation'):
+            # Attempt trade execution if analysis was successful and recommended
+            if execution_data["success"] and analysis.get('bet_recommendation'):
                 try:
-                    if await decision_maker.validate_decision(
-                        research_data['market_data'],
+                    trade_result = await executor.execute_trade(
+                        market_id,
                         analysis,
-                        analysis['bet_recommendation']
-                    ):
-                        execution_result = await executor.execute_trade(
-                            market_id,
-                            analysis,
-                            research_data
-                        )
-                        result.update(execution_result)
-                        logger.info(f"Trade executed for market {market_id}")
+                        {'market_data': market_data}
+                    )
+                    
+                    execution_data.update(trade_result)
+                    if trade_result.get('success'):
+                        execution_data['trade_executed'] = True
+                        logger.info(f"Successfully executed trade for market {market_id}")
                     else:
-                        result.update({
-                            "success": False,
-                            "reason": "Failed validation",
-                            "details": "Trade recommendation did not pass validation checks"
-                        })
+                        logger.warning(f"Trade execution failed: {trade_result.get('error')}")
                 except Exception as e:
-                    logger.error(f"Trade execution failed for market {market_id}: {str(e)}")
-                    result.update({
-                        "success": False,
-                        "error": f"Trade execution failed: {str(e)}",
-                        "reason": "Execution error"
-                    })
-            else:
-                result.update({
-                    "success": False,
-                    "reason": "No trading opportunity",
-                    "details": "Analysis did not recommend a trade"
-                })
+                    logger.error(f"Error executing trade: {str(e)}")
+                    execution_data["trade_error"] = str(e)
             
-            # Log execution with enhanced data
-            execution_data = {
-                "market_id": market_id,
-                "research_data": research_data,
-                "analysis": analysis,
-                "result": result
-            }
-            
-            self.log_execution(execution_data)
-            return result
+            return execution_data
             
         except Exception as e:
-            logger.error(f"Error in market crew execution: {str(e)}")
-            await self.handle_error(e, {"market_id": market_id})
-            return {"success": False, "error": str(e)}
+            error_msg = str(e)
+            logger.error(f"Error in analyze_and_trade: {error_msg}")
+            execution_data["error"] = error_msg
+            return execution_data
+        finally:
+            # Always log execution data
+            execution_data["end_time"] = datetime.now().isoformat()
+            self.log_execution(execution_data)
+    
+    
+
+    def _get_agent_by_role(self, role: str) -> Optional[Agent]:
+        """Helper method to get agent by role."""
+        return next((agent for agent in self.agents if agent.role == role), None)
 
     async def monitor_positions(self) -> List[Dict]:
-        """Monitor all active positions with enhanced reporting."""
+        """Monitor active positions using executor agent."""
         try:
-            executor = next((a for a in self.agents if a.role == 'Market Executor'), None)
+            executor = self._get_agent_by_role('Market Executor')
             if not executor:
                 raise ValueError("Could not find executor agent")
                 
-            positions = await executor.monitor_positions()
-            
-            # Generate position monitoring report
-            report = "=== POSITION MONITORING REPORT ===\n"
-            for pos in positions:
-                report += f"\nMarket: {pos['market_id']}\n"
-                report += f"Current P/L: {pos['profit_loss']:.2f}\n"
-                report += f"Status: {'Resolved' if pos['is_resolved'] else 'Active'}\n"
-                report += "-" * 30
-            
-            print(report)
-            return positions
+            return await executor.monitor_positions()
             
         except Exception as e:
             logger.error(f"Error monitoring positions: {str(e)}")
             raise
-
-    def get_current_report_path(self) -> str:
-        """Get the path to the current consolidated report."""
-        return self._report_formatter.get_current_report_path()
