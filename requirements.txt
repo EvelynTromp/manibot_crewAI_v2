@@ -4,3 +4,4 @@ aiohttp>=3.9.1
 pydantic>=1.10.0,<2.0.0
 python-dotenv>=1.0.0
 google-api-python-client>=2.108.0
+backoff
