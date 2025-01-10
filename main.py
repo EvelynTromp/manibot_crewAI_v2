@@ -1,9 +1,8 @@
 import asyncio
 import argparse
-from crews.market_crew import MarketCrew
+import logging
+from market_trader import MarketTrader
 from utils.logger import get_logger
-from config.settings import settings
-from pathlib import Path
 
 logger = get_logger(__name__)
 
@@ -12,49 +11,43 @@ async def main():
     parser.add_argument('--scan', action='store_true', help='Scan markets for opportunities')
     parser.add_argument('--market', type=str, help='Analyze specific market ID')
     parser.add_argument('--monitor', action='store_true', help='Monitor active positions')
+    parser.add_argument('--verbose', '-v', action='store_true', help='Enable debug logging')
     args = parser.parse_args()
 
+    # Set debug logging if verbose flag is used
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger('market_analyzer').setLevel(logging.DEBUG)
+
     logger.info("Starting bot...")
-    crew = MarketCrew()
-    logger.info("Crew initialized successfully")
+    trader = MarketTrader()
     
     try:
         if args.scan:
             print("\n🔍 Scanning markets for opportunities...\n")
-            results = await crew.scan_markets()
-            
-            # Calculate success metrics
+            results = await trader.scan_markets()
             successful = len([r for r in results if r.get('success')])
-            total = len(results)
             trades = len([r for r in results if r.get('trade_executed')])
-            
-            # Save reports
-            report_path = crew.finalize_scan_session()
-            
-            # Display results
-            print(f"\n✅ Scan complete: Analyzed {total} markets ({successful} successful).")
+            print(f"\n✅ Scan complete: Analyzed {len(results)} markets ({successful} successful)")
             if trades > 0:
                 print(f"📈 Executed {trades} trades")
-            if report_path:
-                print(f"📝 Report saved to: {report_path}")
             print()
             
         elif args.market:
             print(f"\n📊 Analyzing market: {args.market}\n")
-            result = await crew.analyze_and_trade(args.market)
-            
-            # Save individual market report
-            report_path = crew.finalize_scan_session()
-            
+            result = await trader.analyze_and_trade(args.market)
             print("\n✅ Analysis complete")
-            if report_path:
-                print(f"📝 Report saved to: {report_path}")
+            if result.get('trade_executed'):
+                print("📈 Trade executed successfully")
             print()
             
         elif args.monitor:
             print("\n👀 Monitoring active positions...\n")
-            positions = await crew.monitor_positions()
-            print(f"\nCurrent positions: {positions}\n")
+            positions = await trader.monitor_positions()
+            for pos in positions:
+                print(f"Market {pos['market_id']}: {'Resolved' if pos['is_resolved'] else 'Active'}")
+                print(f"P&L: ${pos['profit_loss']:.2f}")
+            print()
             
         else:
             print("\n❌ Error: No action specified. Use --scan, --market, or --monitor\n")

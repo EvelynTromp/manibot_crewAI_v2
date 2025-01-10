@@ -6,6 +6,7 @@ from typing import Dict, List, Optional
 import logging
 from datetime import datetime, timezone
 import random
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -50,10 +51,10 @@ class ManifoldClient:
 
 
     async def _make_request(self, 
-                          method: str, 
-                          endpoint: str, 
-                          data: Optional[Dict] = None,
-                          params: Optional[Dict] = None) -> Dict:
+                       method: str, 
+                       endpoint: str, 
+                       data: Optional[Dict] = None,
+                       params: Optional[Dict] = None) -> Dict:
         """
         Makes a rate-limited request to the Manifold API with comprehensive error handling.
         
@@ -69,59 +70,67 @@ class ManifoldClient:
         Raises:
             Various exceptions with detailed error messages
         """
-        # Implement basic rate limiting
-        current_time = asyncio.get_event_loop().time()
-        time_since_last_request = current_time - self.last_request_time
-        if time_since_last_request < self.min_request_interval:
-            await asyncio.sleep(self.min_request_interval - time_since_last_request)
+        # Implement exponential backoff for rate limiting
+        max_retries = 3
+        base_delay = 1.0
         
-        try:
-            async with aiohttp.ClientSession() as session:
-                url = f"{self.base_url}/{endpoint}"
-                
-                # Log request details for debugging
-                logger.debug(f"Making {method} request to {url}")
-                if data:
-                    logger.debug(f"Request data: {data}")
-                if params:
-                    logger.debug(f"Request params: {params}")
-                
-                async with session.request(
-                    method, 
-                    url, 
-                    headers=self.headers,
-                    json=data,
-                    params=params
-                ) as response:
-                    # Update rate limiting timestamp
-                    self.last_request_time = asyncio.get_event_loop().time()
+        for attempt in range(max_retries):
+            try:
+                async with aiohttp.ClientSession() as session:
+                    url = f"{self.base_url}/{endpoint}"
                     
-                    # Handle various response status codes
-                    if response.status == 200:
-                        return await response.json()
-                    elif response.status == 429:
-                        logger.warning("Rate limit exceeded, implementing backoff")
-                        await asyncio.sleep(5)  # Basic backoff
-                        raise Exception("Rate limit exceeded")
-                    elif response.status == 401:
-                        raise Exception("Unauthorized - check API key")
-                    elif response.status == 404:
-                        raise Exception(f"Resource not found: {endpoint}")
-                    else:
-                        # For other errors, try to get error details from response
-                        try:
-                            error_data = await response.json()
-                            error_msg = error_data.get('message', 'Unknown error')
-                        except:
-                            error_msg = await response.text()
-                        raise Exception(f"API error ({response.status}): {error_msg}")
+                    # Log request details for debugging
+                    logger.debug(f"Making {method} request to {url}")
+                    if data:
+                        logger.debug(f"Request data: {json.dumps(data, indent=2)}")
+                    if params:
+                        logger.debug(f"Request params: {params}")
+                    
+                    async with session.request(
+                        method, 
+                        url, 
+                        headers=self.headers,
+                        json=data,
+                        params=params,
+                        timeout=30  # Add timeout to prevent hanging
+                    ) as response:
                         
-        except aiohttp.ClientError as e:
-            logger.error(f"Network error in API request: {str(e)}")
-            raise Exception(f"Network error: {str(e)}")
-        except Exception as e:
-            logger.error(f"Error in API request: {str(e)}")
-            raise
+                        # Handle various response status codes
+                        if response.status == 429:  # Rate limit exceeded
+                            delay = base_delay * (2 ** attempt)
+                            logger.warning(f"Rate limit exceeded, waiting {delay}s before retry")
+                            await asyncio.sleep(delay)
+                            continue
+                            
+                        response_text = await response.text()
+                        
+                        try:
+                            response_data = json.loads(response_text)
+                        except json.JSONDecodeError:
+                            logger.error(f"Invalid JSON response: {response_text}")
+                            raise ValueError("Invalid API response format")
+                        
+                        if response.status == 200:
+                            return response_data
+                        elif response.status == 401:
+                            raise ValueError("Unauthorized - check API key")
+                        elif response.status == 404:
+                            raise ValueError(f"Resource not found: {endpoint}")
+                        else:
+                            error_msg = response_data.get('message', 'Unknown error')
+                            logger.error(f"API error ({response.status}): {error_msg}")
+                            raise ValueError(f"API error: {error_msg}")
+                            
+            except aiohttp.ClientError as e:
+                if attempt == max_retries - 1:
+                    logger.error(f"Network error in API request: {str(e)}")
+                    raise
+                logger.warning(f"Request failed (attempt {attempt + 1}/{max_retries}): {str(e)}")
+                await asyncio.sleep(base_delay * (2 ** attempt))
+                
+            except Exception as e:
+                logger.error(f"Error in API request: {str(e)}", exc_info=True)
+                raise
 
     async def get_markets(self, limit: int = 50) -> List[Dict]:
         """
@@ -168,34 +177,65 @@ class ManifoldClient:
         """
         return await self._make_request("GET", f"market/{market_id}")
 
-
-
-    async def validate_bet_parameters(self, amount: float) -> bool:
+    
+    async def validate_bet_parameters(self, market_id: str, amount: float, probability: float) -> bool:
         """
-        Validates if a bet can be placed by checking user's balance and other constraints.
-        This helps prevent failed trades before we attempt them.
+        Comprehensive validation of bet parameters including balance check, market status,
+        and sanity checks for the bet amount and probability.
+        
+        Returns:
+            bool: True if all validations pass, False otherwise
         """
         try:
-            # Get user balance
+            # Get user balance and account info
             me_data = await self._make_request("GET", "me")
             balance = float(me_data.get('balance', 0))
+            username = me_data.get('username', 'Unknown')
+            user_id = me_data.get('id', 'Unknown')
             
-            # Log balance information for debugging
+            # Get market data
+            market = await self._make_request("GET", f"market/{market_id}")
+            
+            # Log current state for debugging
+            logger.info(f"Account: {username} (ID: {user_id})")
             logger.info(f"Current Manifold balance: M${balance}")
             logger.info(f"Attempting to bet: M${amount}")
             
+            # Validate market is still active
+            if market.get('isResolved'):
+                logger.error(f"Market {market_id} is already resolved")
+                return False
+                
+            close_time = market.get('closeTime')
+            if close_time and close_time < time.time() * 1000:
+                logger.error(f"Market {market_id} is closed")
+                return False
+                
+            # Validate market type
+            if market.get('outcomeType') != 'BINARY':
+                logger.error(f"Market {market_id} is not a binary type")
+                return False
+                
+            # Validate bet amount
             if amount > balance:
-                logger.error(f"Insufficient balance. Required: M${amount}, Available: M${balance}")
+                logger.error(f"Insufficient balance for account {username}. Required: M${amount}, Available: M${balance}")
                 return False
                 
             if amount <= 0:
-                logger.error("Invalid bet amount: Must be greater than 0")
+                logger.error(f"Invalid bet amount for account {username}: Must be greater than 0")
                 return False
                 
+            # Validate probability
+            market_prob = float(market.get('probability', 0.5))
+            if abs(probability - market_prob) > 0.5:
+                logger.warning(f"Large probability difference. Market: {market_prob}, Bet: {probability}")
+                
+            # All validations passed
+            logger.info(f"Bet parameters validated successfully for market {market_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Error validating bet parameters: {str(e)}")
+            logger.error(f"Error validating bet parameters: {str(e)}", exc_info=True)
             return False
 
     async def place_bet(self, market_id: str, amount: float, outcome: str, probability: float) -> Dict:
@@ -211,31 +251,58 @@ class ManifoldClient:
             if not (0 < probability < 1):
                 raise ValueError("Probability must be between 0 and 1")
             
-            # Prepare bet data
+            market = await self._make_request("GET", f"market/{market_id}")
+            
+                    # Validate market type
+            if market.get('outcomeType') != 'BINARY':
+                raise ValueError("Market is not a binary type")
+            
+            # Get market data to check type
+            
+            # Prepare bet data based on market type
             data = {
-                "contractId": market_id,
                 "amount": amount,
-                "outcome": outcome,
-                "limitProb": round(probability, 3)
+                "contractId": market_id
             }
+            
+            # Handle binary markets
+            if market.get('outcomeType') == 'BINARY':
+                data["outcome"] = outcome
+                data["limitProb"] = round(probability, 3)
+            else:
+                # We shouldn't get here due to market filtering, but just in case
+                raise ValueError("Market is not a binary type")
             
             # Log the exact request being sent
             logger.info(f"Sending bet request to Manifold API: {json.dumps(data, indent=2)}")
             
             # Place the bet
             try:
+                # Prepare bet data
+                data = {
+                    "amount": amount,
+                    "contractId": market_id,
+                    "outcome": outcome,
+                    "limitProb": round(probability, 3)
+                }
+                
+                # Log the exact request being sent
+                logger.debug(f"Sending bet request: {json.dumps(data, indent=2)}")
+                
                 result = await self._make_request("POST", "bet", data=data)
                 
                 # Log the complete API response
-                logger.info(f"Received API response: {json.dumps(result, indent=2)}")
+                logger.debug(f"Received API response: {json.dumps(result, indent=2)}")
                 
                 if not result:
-                    raise ValueError("Empty response from Manifold API")
-                
-                # Verify the bet was placed successfully
-                if 'id' not in result:
-                    raise ValueError("No bet ID in response - bet may have failed")
+                    raise ValueError(f"Empty response from Manifold API")
                     
+                if 'id' not in result:
+                    # Log additional details about the failed response
+                    logger.error(f"Invalid API response structure: {json.dumps(result, indent=2)}")
+                    raise ValueError(f"No bet ID in response - full response: {result}")
+        
+                logger.info(f"Successfully placed bet {result['id']} on market {market_id}")
                 return result
                 
             except Exception as e:
